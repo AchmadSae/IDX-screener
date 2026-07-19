@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import * as Hooks from '@app/pages/hooks/index.ts'
 import type * as Types from '@app/pages/Types.ts'
 
-export function useSectorStrength(week: 26 | 52 = 26) {
+export function useSectorStrength(week: 1 | 4 | 13 | 26 = 4) {
   const [data, setData] = useState<Types.SectorStrengthRow[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -23,7 +23,11 @@ export function useSectorStrength(week: 26 | 52 = 26) {
       setLoading(true)
       setError(null)
       const opts = signal ? { signal } : undefined
-      Hooks.fetchApi<Types.SectorStrengthRow[]>('/api/sector/strength', { week }, opts)
+      Hooks.fetchApi<Types.SectorStrengthRow[]>(
+        '/api/sector/strength',
+        { week, source: 'ohlc' },
+        opts
+      )
         .then((result) => {
           if (requestIdRef.current === myId) {
             setData(result)

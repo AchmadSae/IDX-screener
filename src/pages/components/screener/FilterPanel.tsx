@@ -31,6 +31,7 @@ export default function FilterPanel({
   onApply,
   onDefaultFilter
 }: Types.FilterPanelProps) {
+  const [isApplying, setApplying] = useState(false)
   const updateFilterParam = (key: keyof Types.CandidatesParams, paramValue: unknown) => {
     onParamsChange({ [key]: paramValue })
   }
@@ -120,7 +121,7 @@ export default function FilterPanel({
                     id='idx-filter-perMax'
                     type='number'
                     className='idx-input'
-                    placeholder='25'
+                    placeholder='15'
                     min={0}
                     step={1}
                     value={params.perMax ?? ''}
@@ -168,7 +169,7 @@ export default function FilterPanel({
                     id='idx-filter-derMax'
                     type='number'
                     className='idx-input'
-                    placeholder='2'
+                    placeholder='0.4'
                     min={0}
                     step={0.1}
                     value={params.derMax ?? ''}
@@ -187,7 +188,7 @@ export default function FilterPanel({
                 <span>Momentum</span>
               </p>
               <p className='idx-filter-group-desc'>
-                Periode return (26 atau 52 minggu) dan batas minimal momentum (%).
+                Periode return 1 minggu sampai 6 bulan dan batas minimal momentum (%).
               </p>
               <div className='idx-filter-group-fields'>
                 <div className='idx-form-group'>
@@ -197,12 +198,17 @@ export default function FilterPanel({
                   <select
                     id='idx-filter-momentumWeek'
                     className='idx-select'
-                    value={params.momentumWeek ?? 26}
+                    value={params.momentumWeek ?? 1}
                     onChange={(event) =>
-                      updateFilterParam('momentumWeek', Number(event.target.value) as 26 | 52)}
+                      updateFilterParam(
+                        'momentumWeek',
+                        Number(event.target.value) as 1 | 4 | 13 | 26
+                      )}
                   >
+                    <option value={1}>1 minggu</option>
+                    <option value={4}>4 minggu</option>
+                    <option value={13}>13 minggu</option>
                     <option value={26}>26 minggu</option>
-                    <option value={52}>52 minggu</option>
                   </select>
                 </div>
                 <div className='idx-form-group'>
@@ -222,6 +228,69 @@ export default function FilterPanel({
                         event.target.value === '' ? undefined : Number(event.target.value)
                       )}
                   />
+                </div>
+              </div>
+            </div>
+            <div className='idx-filter-group'>
+              <p className='idx-filter-group-title'>
+                <ChevronRight size={16} aria-hidden />
+                <span>Konfirmasi Momentum & Relatif</span>
+              </p>
+              <p className='idx-filter-group-desc'>
+                Pilih tipe momentum, batas minimal, dan perbandingan terhadap IHSG (Relative
+                Strength).
+              </p>
+              <div className='idx-filter-group-fields'>
+                <div className='idx-form-group'>
+                  <label className='idx-form-label' htmlFor='idx-filter-relStrength'>
+                    RS vs IHSG Min (%)
+                  </label>
+                  <input
+                    id='idx-filter-relStrength'
+                    type='number'
+                    className='idx-input'
+                    placeholder='10'
+                    step={0.1}
+                    value={params.relativeStrengthMin ?? ''}
+                    onChange={(event) =>
+                      updateFilterParam(
+                        'relativeStrengthMin',
+                        event.target.value === '' ? undefined : Number(event.target.value)
+                      )}
+                  />
+                </div>
+                <div className='idx-form-group'>
+                  <label className='idx-checkbox-label'>
+                    <input
+                      type='checkbox'
+                      checked={params.smartMoneyOnly === true}
+                      onChange={(event) =>
+                        updateFilterParam('smartMoneyOnly', event.target.checked)}
+                    />
+                    Smart Money Only (Vol &gt; 120% avg)
+                  </label>
+                </div>
+                <div className='idx-form-group'>
+                  <label className='idx-checkbox-label'>
+                    <input
+                      type='checkbox'
+                      checked={params.requireBullishTrend === true}
+                      onChange={(event) =>
+                        updateFilterParam('requireBullishTrend', event.target.checked)}
+                    />
+                    Require Bullish Trend
+                  </label>
+                </div>
+                <div className='idx-form-group'>
+                  <label className='idx-checkbox-label'>
+                    <input
+                      type='checkbox'
+                      checked={params.requireEarlyReversal === true}
+                      onChange={(event) =>
+                        updateFilterParam('requireEarlyReversal', event.target.checked)}
+                    />
+                    Require Early Reversal
+                  </label>
                 </div>
               </div>
             </div>
@@ -314,12 +383,35 @@ export default function FilterPanel({
               <RotateCcw size={16} aria-hidden />
               <span>Reset Ke Default</span>
             </button>
-            <button type='button' className='idx-btn-primary' onClick={onApply}>
+            <button
+              type='button'
+              className='idx-btn-primary'
+              onClick={async () => {
+                try {
+                  setApplying(true)
+                  const res = onApply()
+                  if (res && typeof (res as Promise<void>).then === 'function') {
+                    await res
+                  } else {
+                    // keep overlay for a short moment so user sees feedback
+                    await new Promise((r) => setTimeout(r, 800))
+                  }
+                } finally {
+                  setApplying(false)
+                }
+              }}
+            >
               <Check size={16} aria-hidden />
               <span>Terapkan Filter</span>
             </button>
           </div>
         </>
+      )}
+      {isApplying && (
+        <div className='idx-filter-loading-overlay' role='status' aria-live='polite'>
+          <div className='idx-spinner' aria-hidden />
+          <div className='idx-filter-loading-text'>Memuat kandidat...</div>
+        </div>
       )}
     </div>
   )

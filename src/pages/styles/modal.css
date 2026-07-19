@@ -170,6 +170,66 @@
   margin-bottom: var(--idx-space-4);
 }
 
+/* TradeAdvisor styles */
+.idx-trade-advisor {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 12px 20px;
+  align-items: start;
+}
+
+.idx-trade-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 18px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.idx-trade-buy {
+  background: linear-gradient(90deg, var(--idx-up), #6dd39a);
+  color: white;
+}
+.idx-trade-sell {
+  background: linear-gradient(90deg, var(--idx-down), #e66b6b);
+  color: white;
+}
+.idx-trade-wait {
+  background: linear-gradient(90deg, #f3f4f6, #e9eef6);
+  color: var(--idx-deep);
+  border: 1px solid var(--idx-border);
+}
+
+.idx-trade-reasons {
+  margin: 8px 0 0 0;
+  padding-left: 16px;
+  color: var(--idx-text-muted);
+}
+.idx-trade-reasons li {
+  margin-bottom: 6px;
+}
+
+.idx-trade-verify {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+
+.idx-trade-verify div {
+  margin-top: 6px;
+}
+
+.idx-trade-advisor a {
+  color: var(--idx-primary);
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .idx-trade-advisor {
+    grid-template-columns: 1fr;
+  }
+}
+
 .idx-modal {
   display: flex;
   flex-direction: column;

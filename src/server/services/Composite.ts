@@ -79,11 +79,14 @@ export class Composite {
       return []
     }
     const { valueWeight, qualityWeight, momentumWeight } = Composite.resolveWeights(weights)
+    // Normalize inputs for scoring
     const perNorm = Composite.minMaxNormalize(rows.map((row) => row.per ?? NaN))
     const pbvNorm = Composite.minMaxNormalize(rows.map((row) => row.pbv ?? NaN))
     const roeNorm = Composite.minMaxNormalize(rows.map((row) => row.roe ?? NaN))
     const roaNorm = Composite.minMaxNormalize(rows.map((row) => row.roa ?? NaN))
     const derNorm = Composite.minMaxNormalize(rows.map((row) => row.der ?? NaN))
+    const week4Norm = Composite.minMaxNormalize(rows.map((row) => row.week4PC ?? NaN))
+    const week13Norm = Composite.minMaxNormalize(rows.map((row) => row.week13PC ?? NaN))
     const week26Norm = Composite.minMaxNormalize(rows.map((row) => row.week26PC ?? NaN))
     const week52Norm = Composite.minMaxNormalize(rows.map((row) => row.week52PC ?? NaN))
     const scoredRows: Types.RankedRow[] = rows.map((row) => {
@@ -100,14 +103,19 @@ export class Composite {
         (_, i) => [row.roe, row.roa, row.der][i] != null
       )
       const qualityScore = qualityParts.length > 0 ? Composite.averageOf(qualityParts) : 0
+      // Momentum (use available horizons)
+      const week4Score = row.week4PC != null ? (week4Norm.get(row.week4PC) ?? 0) : 0
+      const week13Score = row.week13PC != null ? (week13Norm.get(row.week13PC) ?? 0) : 0
       const week26Score = row.week26PC != null ? (week26Norm.get(row.week26PC) ?? 0) : 0
       const week52Score = row.week52PC != null ? (week52Norm.get(row.week52PC) ?? 0) : 0
-      const momentumParts = [week26Score, week52Score].filter(
-        (_, i) => [row.week26PC, row.week52PC][i] != null
+      const momentumParts = [week4Score, week13Score, week26Score, week52Score].filter(
+        (_, i) => [row.week4PC, row.week13PC, row.week26PC, row.week52PC][i] != null
       )
       const momentumScore = momentumParts.length > 0 ? Composite.averageOf(momentumParts) : 0
       const compositeScore = valueWeight * valueScore + qualityWeight * qualityScore +
         momentumWeight * momentumScore
+      // compositeScore normalized 0..1; scale to 0..100 for easier reading
+      const compositeScore100 = Math.round(compositeScore * 1000) / 10
       return {
         code: row.code,
         name: row.name,
@@ -115,7 +123,7 @@ export class Composite {
         valueScore: Math.round(valueScore * 1000) / 1000,
         qualityScore: Math.round(qualityScore * 1000) / 1000,
         momentumScore: Math.round(momentumScore * 1000) / 1000,
-        compositeScore: Math.round(compositeScore * 1000) / 1000,
+        compositeScore: compositeScore100,
         rank: 0
       }
     })

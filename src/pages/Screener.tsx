@@ -16,25 +16,62 @@ import type * as Types from '@app/pages/Types.ts'
 const defaultParams: Types.CandidatesParams = {
   limit: 10,
   offset: 0,
+  setup: 'fundamental',
   defaultFilter: true,
   excludeNotation: true,
   excludeCorpAction: true,
   excludeUma: true,
-  perMin: 1,
-  perMax: 25,
-  roeMin: 10,
-  derMax: 2,
-  momentumWeek: 26,
-  momentumMin: 5,
-  minValue: 1_000_000_000,
-  minVolume: 100_000,
+  perMin: 3,
+  perMax: 18,
+  roeMin: 15,
+  derMax: 0.8,
+  momentumWeek: 13,
+  momentumMin: 10,
+  minValue: 10_000_000_000,
+  minVolume: 1_000_000,
+  exchange: 'IDX',
+  requireNewsSentiment: false,
   withSectorRank: true
+}
+
+const reboundParams: Types.CandidatesParams = {
+  limit: 10,
+  offset: 0,
+  setup: 'rebound',
+  momentumWeek: 1,
+  momentumMin: 0,
+  excludeNotation: true,
+  excludeCorpAction: true,
+  excludeUma: true,
+  exchange: 'IDX',
+  requireNewsSentiment: true,
+  withSectorRank: true
+}
+
+const swingParams: Types.CandidatesParams = {
+  limit: 10,
+  offset: 0,
+  setup: 'swing',
+  momentumWeek: 13,
+  momentumMin: 5,
+  excludeNotation: true,
+  excludeCorpAction: true,
+  excludeUma: true,
+  exchange: 'IDX',
+  requireNewsSentiment: true,
+  withSectorRank: true
+}
+
+const paramsBySetup: Record<Types.TradingSetup, Types.CandidatesParams> = {
+  fundamental: defaultParams,
+  rebound: reboundParams,
+  swing: swingParams
 }
 
 export default function Screener() {
   const [params, setParams] = useState<Types.CandidatesParams>(defaultParams)
   const [appliedParams, setAppliedParams] = useState<Types.CandidatesParams>(defaultParams)
-  const [sectorWeek, setSectorWeek] = useState<26 | 52>(26)
+  const [sectorWeek, setSectorWeek] = useState<1 | 4 | 13 | 26>(4)
   const [sectorFilter, setSectorFilter] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [searchForRequest, setSearchForRequest] = useState<string>('')
@@ -126,6 +163,15 @@ export default function Screener() {
     setSearchForRequest('')
   }, [])
 
+  const handleSetupChange = useCallback((setup: Types.TradingSetup) => {
+    const paramsToApply = { ...paramsBySetup[setup], offset: 0 }
+    setParams(paramsToApply)
+    setAppliedParams(paramsToApply)
+    setSectorFilter('')
+    setSearchQuery('')
+    setSearchForRequest('')
+  }, [])
+
   const handlePageChange = useCallback((newOffset: number) => {
     setParams((prevParams: Types.CandidatesParams) => ({ ...prevParams, offset: newOffset }))
     setAppliedParams((prevParams: Types.CandidatesParams) => ({ ...prevParams, offset: newOffset }))
@@ -168,6 +214,7 @@ export default function Screener() {
     : searchForRequest !== ''
     ? `cari: "${searchForRequest}"`
     : undefined
+  const activeSetup = appliedParams.setup ?? 'fundamental'
 
   return (
     <div className='idx-page'>
@@ -190,12 +237,41 @@ export default function Screener() {
           <button
             type='button'
             className={`idx-tab idx-tab-inline ${
-              mainTab === 'fundamental' ? 'idx-tab-active' : ''
+              mainTab === 'fundamental' && activeSetup === 'fundamental' ? 'idx-tab-active' : ''
             }`}
-            onClick={() => setMainTab('fundamental')}
+            onClick={() => {
+              setMainTab('fundamental')
+              handleSetupChange('fundamental')
+            }}
           >
             <BarChart2 size={16} aria-hidden />
             <span>Analisa Fundamental</span>
+          </button>
+          <button
+            type='button'
+            className={`idx-tab idx-tab-inline ${
+              mainTab === 'fundamental' && activeSetup === 'rebound' ? 'idx-tab-active' : ''
+            }`}
+            onClick={() => {
+              setMainTab('fundamental')
+              handleSetupChange('rebound')
+            }}
+          >
+            <TrendingUp size={16} aria-hidden />
+            <span>Rebound Day</span>
+          </button>
+          <button
+            type='button'
+            className={`idx-tab idx-tab-inline ${
+              mainTab === 'fundamental' && activeSetup === 'swing' ? 'idx-tab-active' : ''
+            }`}
+            onClick={() => {
+              setMainTab('fundamental')
+              handleSetupChange('swing')
+            }}
+          >
+            <TrendingUp size={16} aria-hidden />
+            <span>Swing Trade</span>
           </button>
           <button
             type='button'
@@ -229,6 +305,7 @@ export default function Screener() {
                   onRowClick={handleRowClick}
                   searchValue={searchQuery}
                   onSearchChange={handleSearchChange}
+                  setup={appliedParams.setup ?? 'fundamental'}
                   loading={candidatesLoading}
                   error={candidatesError}
                   emptyMessage={searchForRequest !== ''
@@ -274,6 +351,7 @@ export default function Screener() {
               totalCount={watchlistRows.length}
               onPage={handlePageChange}
               onRowClick={handleRowClick}
+              setup='fundamental'
               loading={false}
               error={null}
               emptyMessage='Belum ada emiten di watchlist. Dari tab Analisa Fundamental, klik bintang di baris kandidat untuk menambah.'

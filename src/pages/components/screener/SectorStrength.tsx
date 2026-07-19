@@ -75,17 +75,31 @@ export default function SectorStrength({
         <div className='idx-tabs'>
           <button
             type='button'
+            className={`idx-tab ${week === 1 ? 'idx-tab-active' : ''}`}
+            onClick={() => onWeekChange(1)}
+          >
+            1w
+          </button>
+          <button
+            type='button'
+            className={`idx-tab ${week === 4 ? 'idx-tab-active' : ''}`}
+            onClick={() => onWeekChange(4)}
+          >
+            4w
+          </button>
+          <button
+            type='button'
+            className={`idx-tab ${week === 13 ? 'idx-tab-active' : ''}`}
+            onClick={() => onWeekChange(13)}
+          >
+            13w
+          </button>
+          <button
+            type='button'
             className={`idx-tab ${week === 26 ? 'idx-tab-active' : ''}`}
             onClick={() => onWeekChange(26)}
           >
             26w
-          </button>
-          <button
-            type='button'
-            className={`idx-tab ${week === 52 ? 'idx-tab-active' : ''}`}
-            onClick={() => onWeekChange(52)}
-          >
-            52w
           </button>
         </div>
       </div>

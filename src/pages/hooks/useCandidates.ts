@@ -21,6 +21,9 @@ function buildQueryParams(
   if (params.date != null) {
     queryParams['date'] = params.date
   }
+  if (params.setup != null && params.setup !== 'fundamental') {
+    queryParams['setup'] = params.setup
+  }
   if (params.defaultFilter === true) {
     queryParams['defaultFilter'] = true
   }
@@ -60,11 +63,62 @@ function buildQueryParams(
   if (params.withSectorRank === true) {
     queryParams['withSectorRank'] = true
   }
+  if (params.exchange != null && params.exchange !== '') {
+    queryParams['exchange'] = params.exchange
+  }
+  if (params.minMarketCapital != null) {
+    queryParams['minMarketCapital'] = params.minMarketCapital
+  }
+  if (params.revenueTtmYoYMin != null) {
+    queryParams['revenueTtmYoYMin'] = params.revenueTtmYoYMin
+  }
+  if (params.relativeStrengthMin != null) {
+    queryParams['relativeStrengthMin'] = params.relativeStrengthMin
+  }
+  if (params.netIncomeTtmYoYMin != null) {
+    queryParams['netIncomeTtmYoYMin'] = params.netIncomeTtmYoYMin
+  }
+  if (params.netMarginMin != null) {
+    queryParams['netMarginMin'] = params.netMarginMin
+  }
+  if (params.pbvMax != null) {
+    queryParams['pbvMax'] = params.pbvMax
+  }
+  if (params.freeCashFlowTtmMin != null) {
+    queryParams['freeCashFlowTtmMin'] = params.freeCashFlowTtmMin
+  }
+  if (params.operatingCashFlowTtmMin != null) {
+    queryParams['operatingCashFlowTtmMin'] = params.operatingCashFlowTtmMin
+  }
+  if (params.roaMin != null) {
+    queryParams['roaMin'] = params.roaMin
+  }
+  if (params.grossMarginMin != null) {
+    queryParams['grossMarginMin'] = params.grossMarginMin
+  }
+  if (params.operatingMarginMin != null) {
+    queryParams['operatingMarginMin'] = params.operatingMarginMin
+  }
+  if (params.requireNewsSentiment === true) {
+    queryParams['requireNewsSentiment'] = true
+  }
+  if (params.minNewsSentiment != null) {
+    queryParams['minNewsSentiment'] = params.minNewsSentiment
+  }
   if (params.sector != null && params.sector !== '') {
     queryParams['sector'] = params.sector
   }
   if (params.search != null && params.search.trim() !== '') {
     queryParams['search'] = params.search.trim()
+  }
+  if (params.smartMoneyOnly === true) {
+    queryParams['smartMoneyOnly'] = true
+  }
+  if (params.requireBullishTrend === true) {
+    queryParams['requireBullishTrend'] = true
+  }
+  if (params.requireEarlyReversal === true) {
+    queryParams['requireEarlyReversal'] = true
   }
   return queryParams
 }
@@ -111,6 +165,7 @@ export function useCandidates(params: Types.CandidatesParams) {
       params.limit,
       params.offset,
       params.date,
+      params.setup,
       params.defaultFilter,
       params.excludeNotation,
       params.excludeCorpAction,
@@ -120,10 +175,27 @@ export function useCandidates(params: Types.CandidatesParams) {
       params.perMin,
       params.perMax,
       params.roeMin,
+      params.roaMin,
       params.derMax,
       params.momentumWeek,
       params.momentumMin,
+      params.minMarketCapital,
+      params.pbvMax,
+      params.netMarginMin,
       params.withSectorRank,
+      params.exchange,
+      params.revenueTtmYoYMin,
+      params.netIncomeTtmYoYMin,
+      params.freeCashFlowTtmMin,
+      params.operatingCashFlowTtmMin,
+      params.grossMarginMin,
+      params.operatingMarginMin,
+      params.relativeStrengthMin,
+      params.smartMoneyOnly,
+      params.requireBullishTrend,
+      params.requireEarlyReversal,
+      params.requireNewsSentiment,
+      params.minNewsSentiment,
       params.sector,
       params.search
     ]

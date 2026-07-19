@@ -92,6 +92,9 @@ export interface ScreenerRow {
   roa: number | null
   roe: number | null
   der: number | null
+  week1PC?: number | null
+  week4PC?: number | null
+  week13PC?: number | null
   week26PC: number | null
   week52PC: number | null
 }
@@ -135,6 +138,32 @@ export interface RankedRowWithSectorRank extends RankedRowWithFlags {
   sectorPercentile: number
 }
 
+export type TradingSetup = 'fundamental' | 'rebound' | 'swing'
+
+export interface TechnicalSummaryRow {
+  stockCode: string
+  date: number
+  priceHigh: number | null
+  priceLow: number | null
+  priceClose: number | null
+  volume: number | null
+}
+
+export interface TechnicalMetrics {
+  price: number | null
+  rsi14: number | null
+  relVolume: number | null
+  ema10: number | null
+  ema20: number | null
+  ema50: number | null
+  ema200: number | null
+  bbBasis20: number | null
+  momentum10: number | null
+  adx14: number | null
+  plusDi14: number | null
+  minusDi14: number | null
+}
+
 export interface SectorStrengthRow {
   sector: string
   avgMomentum: number
@@ -143,10 +172,48 @@ export interface SectorStrengthRow {
 }
 
 export interface CandidateRow extends RankedRowWithFlags {
+  marketCapital: number | null
+  pbv: number | null
+  roa: number | null
+  week1PC: number | null
+  week4PC: number | null
+  week13PC: number | null
+  npm: number | null
   value: number | null
   volume: number | null
   changePct: number | null
+  price: number | null
+  rsi14: number | null
+  relVolume: number | null
+  ema10: number | null
+  ema20: number | null
+  ema50: number | null
+  ema200: number | null
+  bbBasis20: number | null
+  momentum10: number | null
+  adx14: number | null
+  plusDi14: number | null
+  minusDi14: number | null
+  recommendationScore: number
+  recommendationLabel: string | null
+  recommendationReasons: string[]
   compositePercentile: number
+  newsSentimentScore?: number | null
+  newsSentimentLabel?: string | null
+  newsSentimentCount?: number | null
+  newsSentimentTitles?: { title: string; link: string }[]
+  // Advanced scoring
+  fundamentalScore?: number
+  valuationScore?: number
+  liquidityScore?: number
+  totalScore?: number
+  avgVolume20?: number | null
+  avgValue20?: number | null
+  relativeStrength?: number | null
+  selectedMomentumPC?: number | null
+  bullishTrend?: boolean
+  earlyReversal?: boolean
+  smartMoney?: boolean
 }
 
 export interface CandidateRowWithSectorRank extends CandidateRow {
@@ -221,24 +288,41 @@ export interface FundamentalFilter {
   roeMin?: number
   derMax?: number
   momentumMin?: number
-  momentumWeek: 26 | 52
+  momentumWeek: 1 | 4 | 13 | 26
+  pbvMax?: number
+  minMarketCapital?: number
+  netMarginMin?: number
 }
 
 export interface FundamentalsRowInput {
   code: string
   per: unknown
+  roa?: unknown
   roe: unknown
   der: unknown
+  week1PC?: unknown
+  week4PC?: unknown
+  week13PC?: unknown
   week26PC: unknown
   week52PC: unknown
+  pbv?: unknown
+  marketCapital?: unknown
+  npm?: unknown
 }
 
 export interface FundamentalsValues {
   per: number | null
+  roa: number | null
   roe: number | null
   der: number | null
+  week1PC: number | null
+  week4PC: number | null
+  week13PC: number | null
   week26PC: number | null
   week52PC: number | null
+  pbv: number | null
+  marketCapital: number | null
+  npm: number | null
 }
 
 export interface LimitOffset {

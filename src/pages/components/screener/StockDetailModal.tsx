@@ -25,6 +25,7 @@ import {
 import * as Hooks from '@app/pages/hooks/index.ts'
 import * as Utils from '@app/pages/utils/index.ts'
 import type * as Types from '@app/pages/Types.ts'
+import TradeAdvisor from '@app/pages/components/screener/TradeAdvisor.tsx'
 
 const foreignPeriodOptions: Types.ForeignPeriodOption[] = [
   { days: 30, label: '1 bln' },
@@ -263,6 +264,7 @@ export default function StockDetailModal({
                       </tbody>
                     </table>
                   </div>
+                  <TradeAdvisor code={detail.code} detail={detail} />
                   <div className='idx-detail-block'>
                     <label className='idx-form-label'>Momentum</label>
                     <table className='idx-detail-table'>

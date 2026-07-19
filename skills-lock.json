@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "trading-analysis": {
+      "source": "gracefullight/stock-checker",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/trading-analysis/SKILL.md",
+      "computedHash": "16deb933c60d70e41a2d19431bb6865bb44214def192ecec873071fbd2fd8bd2"
+    }
+  }
+}

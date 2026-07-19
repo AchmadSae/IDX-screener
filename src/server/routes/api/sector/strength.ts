@@ -95,6 +95,8 @@ export async function GET(ctx: Context) {
   }
   const screenerRows = await Database.select({
     sector: Schemas.screener.sector,
+    week4PC: Schemas.screener.week4PC,
+    week13PC: Schemas.screener.week13PC,
     week26PC: Schemas.screener.week26PC,
     week52PC: Schemas.screener.week52PC
   }).from(Schemas.screener)
@@ -104,7 +106,16 @@ export async function GET(ctx: Context) {
     if (!Utils.isNonEmptyString(row.sector)) {
       continue
     }
-    const momentumValue = week === 52 ? row.week52PC : row.week26PC
+    let momentumValue: number | null = null
+    if (week === 1) {
+      momentumValue = row.week4PC ?? null
+    } else if (week === 4) {
+      momentumValue = row.week4PC ?? null
+    } else if (week === 13) {
+      momentumValue = row.week13PC ?? null
+    } else if (week === 26) {
+      momentumValue = row.week26PC
+    }
     if (momentumValue == null || !Number.isFinite(momentumValue)) {
       continue
     }

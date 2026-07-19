@@ -132,6 +132,38 @@
   color: var(--idx-text-secondary);
 }
 
+.idx-reason-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--idx-space-6);
+  min-width: 180px;
+}
+
+.idx-reason-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--idx-radius-lg);
+  background: #ecfdf5;
+  color: #047857;
+  font-size: var(--idx-text-xs);
+  font-weight: 800;
+  padding: var(--idx-space-4) var(--idx-space-8);
+  white-space: nowrap;
+}
+
+.idx-score-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  border-radius: var(--idx-radius-lg);
+  background: var(--idx-deep);
+  color: var(--idx-white);
+  font-size: var(--idx-text-xs);
+  font-weight: 800;
+  padding: var(--idx-space-4) var(--idx-space-8);
+}
+
 .idx-table {
   width: 100%;
   border-collapse: collapse;
@@ -261,6 +293,18 @@
 
 .idx-table-code-bold {
   font-weight: 800;
+}
+
+.idx-table-name-muted {
+  display: block;
+  color: var(--idx-text-muted);
+  font-size: var(--idx-text-xs);
+  font-weight: 600;
+  margin-top: var(--idx-space-2);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .idx-table-search {

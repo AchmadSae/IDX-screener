@@ -35,8 +35,17 @@ export default class Utils {
     return Number.isFinite(parsedNum) && parsedNum >= 0 ? parsedNum : undefined
   }
 
-  static parseWeek(raw: string | undefined): 26 | 52 {
-    return raw === '52' ? 52 : 26
+  static parseWeek(raw: string | undefined): 1 | 4 | 13 | 26 {
+    if (raw === '1') {
+      return 1
+    }
+    if (raw === '4') {
+      return 4
+    }
+    if (raw === '13') {
+      return 13
+    }
+    return 26
   }
 
   static queryParamSent(raw: unknown): boolean {
@@ -121,14 +130,29 @@ export default class Utils {
     for (const row of rows) {
       fundamentalsMap.set(row.code, {
         per: row.per != null && Number.isFinite(Number(row.per)) ? Number(row.per) : null,
+        roa: row.roa != null && Number.isFinite(Number(row.roa)) ? Number(row.roa) : null,
         roe: row.roe != null && Number.isFinite(Number(row.roe)) ? Number(row.roe) : null,
         der: row.der != null && Number.isFinite(Number(row.der)) ? Number(row.der) : null,
+        week1PC: row.week1PC != null && Number.isFinite(Number(row.week1PC))
+          ? Number(row.week1PC)
+          : null,
+        week4PC: row.week4PC != null && Number.isFinite(Number(row.week4PC))
+          ? Number(row.week4PC)
+          : null,
+        week13PC: row.week13PC != null && Number.isFinite(Number(row.week13PC))
+          ? Number(row.week13PC)
+          : null,
         week26PC: row.week26PC != null && Number.isFinite(Number(row.week26PC))
           ? Number(row.week26PC)
           : null,
         week52PC: row.week52PC != null && Number.isFinite(Number(row.week52PC))
           ? Number(row.week52PC)
-          : null
+          : null,
+        pbv: row.pbv != null && Number.isFinite(Number(row.pbv)) ? Number(row.pbv) : null,
+        marketCapital: row.marketCapital != null && Number.isFinite(Number(row.marketCapital))
+          ? Number(row.marketCapital)
+          : null,
+        npm: row.npm != null && Number.isFinite(Number(row.npm)) ? Number(row.npm) : null
       })
     }
     return fundamentalsMap
@@ -150,7 +174,28 @@ export default class Utils {
     if (filter.derMax != null && (row.der == null || row.der > filter.derMax)) {
       return false
     }
-    const momentumValue = filter.momentumWeek === 52 ? row.week52PC : row.week26PC
+    if (filter.pbvMax != null && (row.pbv == null || row.pbv > filter.pbvMax)) {
+      return false
+    }
+    if (
+      filter.minMarketCapital != null &&
+      (row.marketCapital == null || row.marketCapital < filter.minMarketCapital)
+    ) {
+      return false
+    }
+    if (filter.netMarginMin != null && (row.npm == null || row.npm < filter.netMarginMin)) {
+      return false
+    }
+    let momentumValue: number | null = null
+    if (filter.momentumWeek === 1) {
+      momentumValue = row.week1PC ?? null
+    } else if (filter.momentumWeek === 4) {
+      momentumValue = row.week4PC ?? null
+    } else if (filter.momentumWeek === 13) {
+      momentumValue = row.week13PC ?? null
+    } else if (filter.momentumWeek === 26) {
+      momentumValue = row.week26PC
+    }
     if (
       filter.momentumMin != null &&
       (momentumValue == null || momentumValue < filter.momentumMin)

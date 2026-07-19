@@ -18,15 +18,52 @@ export interface CandidateRow {
   hasNotation: boolean
   hasCorpAction: boolean
   hasUma: boolean
+  marketCapital: number | null
   per: number | null
+  pbv: number | null
   roe: number | null
   der: number | null
+  week1PC?: number | null
+  week4PC: number | null
+  week13PC: number | null
   week26PC: number | null
   week52PC: number | null
+  npm: number | null
   value: number | null
   volume: number | null
   changePct: number | null
+  price: number | null
+  rsi14: number | null
+  relVolume: number | null
+  ema10: number | null
+  ema20: number | null
+  ema50: number | null
+  ema200: number | null
+  bbBasis20: number | null
+  momentum10: number | null
+  adx14: number | null
+  plusDi14: number | null
+  minusDi14: number | null
+  recommendationScore: number
+  recommendationLabel: string | null
+  recommendationReasons: string[]
   compositePercentile: number
+  newsSentimentScore?: number | null
+  newsSentimentLabel?: string | null
+  newsSentimentCount?: number | null
+  newsSentimentTitles?: { title: string; link: string }[]
+  // Advanced scoring
+  fundamentalScore?: number
+  valuationScore?: number
+  liquidityScore?: number
+  totalScore?: number
+  avgVolume20?: number | null
+  avgValue20?: number | null
+  relativeStrength?: number | null
+  selectedMomentumPC?: number | null
+  bullishTrend?: boolean
+  earlyReversal?: boolean
+  smartMoney?: boolean
 }
 
 export interface CandidateRowWithSectorRank extends CandidateRow {
@@ -36,10 +73,13 @@ export interface CandidateRowWithSectorRank extends CandidateRow {
 
 export type CandidateTableRow = CandidateRow | CandidateRowWithSectorRank
 
+export type TradingSetup = 'fundamental' | 'rebound' | 'swing'
+
 export interface CandidatesParams {
   date?: string
   limit?: number
   offset?: number
+  setup?: TradingSetup
   defaultFilter?: boolean
   excludeNotation?: boolean
   excludeCorpAction?: boolean
@@ -50,8 +90,26 @@ export interface CandidatesParams {
   perMax?: number
   roeMin?: number
   derMax?: number
-  momentumWeek?: 26 | 52
+  roaMin?: number
+  revenueTtmYoYMin?: number
+  netIncomeTtmYoYMin?: number
+  freeCashFlowTtmMin?: number
+  operatingCashFlowTtmMin?: number
+  grossMarginMin?: number
+  operatingMarginMin?: number
+  exchange?: string
+  requireNewsSentiment?: boolean
+  minNewsSentiment?: number
+  momentumWeek?: 1 | 4 | 13 | 26
   momentumMin?: number
+  // Advanced options
+  relativeStrengthMin?: number
+  requireBullishTrend?: boolean
+  requireEarlyReversal?: boolean
+  smartMoneyOnly?: boolean
+  minMarketCapital?: number
+  pbvMax?: number
+  netMarginMin?: number
   withSectorRank?: boolean
   sector?: string
   search?: string
@@ -81,6 +139,7 @@ export interface CandidatesTableProps {
   emptyMessage?: string
   watchlistCodes?: string[]
   onWatchlistToggle?: (code: string, row?: CandidateTableRow) => void
+  setup?: TradingSetup
 }
 
 export interface ClientOptions {
@@ -102,7 +161,7 @@ export interface FilterPanelProps {
   sectorFilter: string
   onSectorFilterChange: (sector: string) => void
   onParamsChange: (partialParams: Partial<CandidatesParams>) => void
-  onApply: () => void
+  onApply: () => void | Promise<void>
   onDefaultFilter: () => void
 }
 
@@ -235,8 +294,8 @@ export interface BidOfferMarketViewProps {
 export interface SectorStrengthProps {
   data: SectorStrengthRow[] | null
   loading: boolean
-  week: 26 | 52
-  onWeekChange: (week: 26 | 52) => void
+  week: 1 | 4 | 13 | 26
+  onWeekChange: (week: 1 | 4 | 13 | 26) => void
 }
 
 export interface SectorStrengthRow {
