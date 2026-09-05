@@ -87,5 +87,12 @@ export class Bootstrap {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  await Bootstrap.run()
+  try {
+    await Bootstrap.run()
+    // The postgres-js pool keeps the event loop alive; exit explicitly.
+    process.exit(0)
+  } catch (error) {
+    console.error('[bootstrap] failed:', error)
+    process.exit(1)
+  }
 }

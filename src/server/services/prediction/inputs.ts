@@ -24,7 +24,8 @@ import type {
   RuleInput
 } from '@app/server/services/prediction/rules.ts'
 
-const HISTORY_BARS = 120
+/** Enough bars for EMA200 (needs >= 200) plus a margin. */
+const HISTORY_BARS = 240
 
 export type AssembledPredictionInput = {
   ruleInput: RuleInput

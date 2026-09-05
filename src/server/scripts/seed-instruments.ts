@@ -52,9 +52,11 @@ async function main(): Promise<void> {
       })
   }
   console.log(`[seed] upserted ${SEED_INSTRUMENTS.length} forex/metals instruments`)
+  // The postgres-js pool keeps the event loop alive; exit explicitly.
+  process.exit(0)
 }
 
 main().catch((error) => {
   console.error('[seed] failed:', error)
-  process.exitCode = 1
+  process.exit(1)
 })

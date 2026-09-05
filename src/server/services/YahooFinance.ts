@@ -47,9 +47,18 @@ type YahooChartResponse = {
 const YAHOO_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart'
 const REQUEST_TIMEOUT_MS = 10_000
 
-/** Converts an internal symbol like `XAU/USD` to the Yahoo ticker `XAUUSD=X`. */
+const METAL_TICKERS: Record<string, string> = {
+  'XAU/USD': 'GC=F',
+  'XAG/USD': 'SI=F'
+}
+
+/**
+ * Converts an internal symbol like `EUR/USD` to the Yahoo ticker `EURUSD=X`.
+ * Metals use the COMEX futures tickers (`GC=F` gold, `SI=F` silver) because
+ * Yahoo delisted the spot `XAUUSD=X`/`XAGUSD=X` symbols.
+ */
 export function toYahooTicker(symbol: string): string {
-  return `${symbol.replace('/', '')}=X`
+  return METAL_TICKERS[symbol] ?? `${symbol.replace('/', '')}=X`
 }
 
 /** Jakarta calendar date for a Yahoo unix-seconds timestamp. */

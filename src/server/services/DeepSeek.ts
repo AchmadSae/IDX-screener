@@ -255,10 +255,12 @@ export class DeepSeek {
         ? (tokens.promptTokens / 1_000_000) * COST_PER_1M_INPUT +
           (tokens.completionTokens / 1_000_000) * COST_PER_1M_OUTPUT
         : null
+    // Keep enough of the response that cached hits can re-parse the JSON
+    // contract (500 chars was cutting mid-JSON and nulling aiScore on cache).
     const run = await DeepSeek.recordRun(input, {
       status,
       inputHash,
-      responseSummary: content != null ? truncate(content, 500) : null,
+      responseSummary: content != null ? truncate(content, 8000) : null,
       errorMessage,
       metadata: { tokens, estimatedCostUsd }
     })
@@ -278,11 +280,16 @@ export class DeepSeek {
   private static async findCachedRun(inputHash: string) {
     const rows = await Database.select()
       .from(Schemas.aiAnalysisRuns)
-      .where(eq(Schemas.aiAnalysisRuns.inputHash, inputHash))
+      .where(
+        and(
+          eq(Schemas.aiAnalysisRuns.inputHash, inputHash),
+          eq(Schemas.aiAnalysisRuns.status, 'success')
+        )
+      )
       .orderBy(desc(Schemas.aiAnalysisRuns.createdAt))
       .limit(1)
     const run = rows[0]
-    if (run == null || run.status !== 'success' || run.responseSummary == null) {
+    if (run == null || run.responseSummary == null) {
       return null
     }
     const createdAtMs = new Date(run.createdAt).getTime()
