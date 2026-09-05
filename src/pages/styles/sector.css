@@ -55,17 +55,17 @@
 }
 
 .idx-sector-item.idx-sector-up {
-  background: #d1fae5;
-  color: #047857;
+  background: var(--idx-chip-up-bg);
+  color: var(--idx-up);
 }
 
 .idx-sector-item.idx-sector-down {
-  background: var(--idx-primary-soft);
+  background: var(--idx-chip-down-bg);
   color: var(--idx-down);
 }
 
 .idx-sector-item.idx-sector-neutral {
-  background: #f3f4f6;
+  background: var(--idx-chip-neutral-bg);
   color: var(--idx-text-muted);
 }
 

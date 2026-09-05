@@ -32,7 +32,7 @@
 
 .idx-home-article h2,
 .idx-home-article h3 {
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-home-article h3 {
@@ -41,7 +41,7 @@
 
 .idx-home-article strong {
   font-weight: 700;
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-home-article .idx-home-formula {
@@ -50,8 +50,8 @@
   font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace;
   font-size: var(--idx-text-sm);
   line-height: 1.5;
-  color: var(--idx-deep);
-  background: rgba(0, 0, 0, 0.04);
+  color: var(--idx-text);
+  background: var(--idx-bg-elevated);
   border-left: 3px solid var(--idx-primary);
   border-radius: 0 var(--idx-radius-sm) var(--idx-radius-sm) 0;
 }
@@ -61,7 +61,7 @@
   padding: var(--idx-space-12) var(--idx-space-16);
   font-size: var(--idx-text-sm);
   line-height: 1.6;
-  color: var(--idx-deep);
+  color: var(--idx-text);
   background: var(--idx-primary-soft);
   border-left: 3px solid var(--idx-primary);
   border-radius: 0 var(--idx-radius-sm) var(--idx-radius-sm) 0;
@@ -69,7 +69,7 @@
 
 .idx-home-article .idx-home-note em {
   font-style: italic;
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-home-note.idx-home-note-mt24 {
@@ -81,14 +81,14 @@
   font-size: var(--idx-text-lg);
   font-weight: 800;
   margin: var(--idx-space-0) var(--idx-space-0) var(--idx-space-12);
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-home-h3 {
   font-size: var(--idx-text-base);
   font-weight: 700;
   margin: var(--idx-space-24) var(--idx-space-0) var(--idx-space-8);
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-home-li,
@@ -105,13 +105,13 @@
   margin-bottom: var(--idx-space-16);
   padding-left: var(--idx-space-24);
   line-height: 1.7;
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-home-p {
   margin-bottom: var(--idx-space-16);
   line-height: 1.7;
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-home-p.idx-home-p-mb0 {
@@ -181,7 +181,7 @@
   margin-bottom: var(--idx-space-16);
   padding-left: var(--idx-space-20);
   line-height: 1.7;
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-home-ul.idx-home-ul-mb0 {

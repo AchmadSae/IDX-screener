@@ -1,0 +1,61 @@
+/**
+ * Copyright (c) 2026 IDX Screener by @NeaByteLab (https://neabyte.com)
+ * SPDX-License-Identifier: MIT
+ *
+ * Open to remote work & consulting.
+ * Fullstack developer with a focus on security and experience in trading systems.
+ *
+ * App-shell chrome: scrollbars, focus visibility, and generic surface helpers
+ * that belong to the dark theme foundation.
+ */
+
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--idx-scrollbar) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--idx-scrollbar);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--idx-border-strong);
+  background-clip: padding-box;
+}
+
+/* Focus visibility */
+:focus-visible {
+  outline: 2px solid var(--idx-focus-ring);
+  outline-offset: 2px;
+}
+
+.idx-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--idx-radius-md);
+}
+
+/* Generic surface helpers */
+.idx-surface {
+  background: var(--idx-surface);
+  border: 1px solid var(--idx-border);
+  border-radius: var(--idx-radius-lg);
+}
+
+.idx-hairline {
+  border: none;
+  border-top: 1px solid var(--idx-border);
+  margin: var(--idx-space-12) 0;
+}

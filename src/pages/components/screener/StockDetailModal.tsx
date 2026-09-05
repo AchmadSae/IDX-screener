@@ -24,6 +24,7 @@ import {
 } from 'recharts'
 import * as Hooks from '@app/pages/hooks/index.ts'
 import * as Utils from '@app/pages/utils/index.ts'
+import { CHART_DOWN, CHART_UP } from '@app/pages/theme/colors.ts'
 import type * as Types from '@app/pages/Types.ts'
 import TradeAdvisor from '@app/pages/components/screener/TradeAdvisor.tsx'
 
@@ -642,7 +643,7 @@ export default function StockDetailModal({
                                             {Utils.Format.formatTitleCase('Net')}:{' '}
                                             <span
                                               style={{
-                                                color: (row.net ?? 0) >= 0 ? '#10b981' : '#ef4444'
+                                                color: (row.net ?? 0) >= 0 ? CHART_UP : CHART_DOWN
                                               }}
                                             >
                                               {Utils.Format.formatRp(row.net)}

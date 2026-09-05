@@ -19,7 +19,7 @@
 }
 
 .idx-header {
-  background: var(--idx-white);
+  background: var(--idx-surface);
   border-bottom: 1px solid var(--idx-border);
   position: sticky;
   top: 0;
@@ -46,7 +46,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--idx-radius-sm);
-  background: linear-gradient(135deg, var(--idx-primary), #b03636);
+  background: linear-gradient(135deg, var(--idx-primary), var(--idx-primary-strong));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,7 +57,7 @@
   font-size: var(--idx-text-xl);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-logo-text span {
@@ -77,7 +77,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #f9fafb;
+  background: var(--idx-bg-elevated);
   padding: var(--idx-space-4);
   border-radius: var(--idx-radius-lg);
 }
@@ -104,7 +104,7 @@
 }
 
 .idx-nav-item:not(.idx-nav-item-active):hover {
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 @media (max-width: 768px) {

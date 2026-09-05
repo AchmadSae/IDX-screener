@@ -10,40 +10,10 @@ import React, { useMemo } from 'react'
 import { Layers } from 'lucide-react'
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import * as Utils from '@app/pages/utils/index.ts'
+import { CATEGORICAL_PALETTE, CHART_MUTED } from '@app/pages/theme/colors.ts'
 import type * as Types from '@app/pages/Types.ts'
 
-export const sectorPalette = [
-  '#6b9bc4',
-  '#8b7aa8',
-  '#a87a8b',
-  '#7a9b7a',
-  '#6b9b8b',
-  '#6b8b9b',
-  '#9b8b6b',
-  '#8b6b9b',
-  '#9b9b6b',
-  '#6b8b8b',
-  '#8b9b7a',
-  '#9b6b8b',
-  '#6b7a9b',
-  '#7a9b6b',
-  '#9b6b7a',
-  '#7a8b9b',
-  '#9b8b7a',
-  '#8b7a9b',
-  '#9b9b7a',
-  '#6b9b7a',
-  '#7a9b8b',
-  '#9b7a8b',
-  '#8b9b6b',
-  '#8b6b7a',
-  '#7a9b9b',
-  '#9b8b8b',
-  '#8b9b8b',
-  '#7a7a9b',
-  '#6b9b9b',
-  '#9b9b8b'
-]
+export const sectorPalette = CATEGORICAL_PALETTE
 
 export default function SectorStrength({
   data,
@@ -124,7 +94,7 @@ export default function SectorStrength({
                   isAnimationActive={false}
                 >
                   {chartData.map((pieSegment) => (
-                    <Cell key={pieSegment.sector} fill={pieSegment.fill ?? '#999'} />
+                    <Cell key={pieSegment.sector} fill={pieSegment.fill ?? CHART_MUTED} />
                   ))}
                 </Pie>
                 <Tooltip

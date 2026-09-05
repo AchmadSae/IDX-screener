@@ -10,6 +10,7 @@ import React, { useMemo } from 'react'
 import { BarChart2 } from 'lucide-react'
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import * as Utils from '@app/pages/utils/index.ts'
+import { CHART_UP } from '@app/pages/theme/colors.ts'
 import type * as Types from '@app/pages/Types.ts'
 
 export default function BidOfferMarketView({
@@ -113,7 +114,7 @@ export default function BidOfferMarketView({
                     )
                   }}
                 />
-                <Bar dataKey='bidVolume' name='Bid' fill='#047857' isAnimationActive={false} />
+                <Bar dataKey='bidVolume' name='Bid' fill={CHART_UP} isAnimationActive={false} />
                 <Bar
                   dataKey='offerVolume'
                   name='Offer'

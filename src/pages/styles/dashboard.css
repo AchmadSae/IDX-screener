@@ -27,7 +27,7 @@
   gap: 10px;
   font-size: var(--idx-text-2xl);
   font-weight: 800;
-  color: var(--idx-deep);
+  color: var(--idx-text);
   letter-spacing: -0.02em;
   margin: var(--idx-space-0);
 }
@@ -73,7 +73,7 @@
 .idx-header-stat-value {
   font-size: var(--idx-text-lg);
   font-weight: 800;
-  color: var(--idx-deep);
+  color: var(--idx-text);
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
@@ -82,11 +82,11 @@
   display: flex;
   align-items: center;
   gap: 0;
-  background: var(--idx-white);
+  background: var(--idx-surface);
   border: 1px solid var(--idx-border);
   border-radius: var(--idx-radius-lg);
   padding: var(--idx-space-12) var(--idx-space-8) var(--idx-space-12) var(--idx-space-20);
-  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.35);
 }
 
 .idx-historical-card .idx-dashboard-header {
@@ -121,7 +121,7 @@
 .idx-stat-card {
   padding: var(--idx-space-24);
   border-radius: var(--idx-radius-lg);
-  background: var(--idx-white);
+  background: var(--idx-surface);
   border: 1px solid var(--idx-border);
 }
 
@@ -136,7 +136,7 @@
 .idx-stat-card-value {
   font-size: var(--idx-text-lg);
   font-weight: 800;
-  color: var(--idx-deep);
+  color: var(--idx-text);
   margin-top: var(--idx-space-8);
 }
 
@@ -158,13 +158,13 @@
 }
 
 .idx-tab:not(.idx-tab-active):hover {
-  color: var(--idx-deep);
+  color: var(--idx-text);
 }
 
 .idx-tabs {
   display: flex;
   gap: 4px;
-  background: #f9fafb;
+  background: var(--idx-bg-elevated);
   padding: var(--idx-space-4);
   border-radius: var(--idx-radius-lg);
 }

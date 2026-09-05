@@ -10,6 +10,7 @@ import React, { useMemo } from 'react'
 import { Activity } from 'lucide-react'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { sectorPalette } from '@app/pages/components/screener/SectorStrength.tsx'
+import { CHART_MUTED } from '@app/pages/theme/colors.ts'
 import * as Utils from '@app/pages/utils/index.ts'
 import type * as Types from '@app/pages/Types.ts'
 
@@ -134,7 +135,7 @@ export default function RsiMarketView({
                   {chartData.map((row, index) => (
                     <Cell
                       key={row.sector}
-                      fill={sectorPalette[index % sectorPalette.length] ?? '#999'}
+                      fill={sectorPalette[index % sectorPalette.length] ?? CHART_MUTED}
                     />
                   ))}
                 </Bar>

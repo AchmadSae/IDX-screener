@@ -18,18 +18,18 @@
 }
 
 .idx-badge-down {
-  background: var(--idx-primary-soft);
+  background: var(--idx-chip-down-bg);
   color: var(--idx-down);
 }
 
 .idx-badge-neutral {
-  background: #f3f4f6;
+  background: var(--idx-chip-neutral-bg);
   color: var(--idx-text-muted);
 }
 
 .idx-badge-up {
-  background: #d1fae5;
-  color: #047857;
+  background: var(--idx-chip-up-bg);
+  color: var(--idx-up);
 }
 
 .idx-historical-table {
@@ -143,8 +143,8 @@
   display: inline-flex;
   align-items: center;
   border-radius: var(--idx-radius-lg);
-  background: #ecfdf5;
-  color: #047857;
+  background: var(--idx-chip-up-bg);
+  color: var(--idx-up);
   font-size: var(--idx-text-xs);
   font-weight: 800;
   padding: var(--idx-space-4) var(--idx-space-8);
@@ -277,7 +277,7 @@
 .idx-table td {
   padding: var(--idx-space-20) var(--idx-space-24);
   font-size: var(--idx-text-base);
-  border-top: 1px solid #f9fafb;
+  border-top: 1px solid var(--idx-border);
 }
 
 .idx-table-empty-cell {
@@ -288,7 +288,7 @@
 }
 
 .idx-table-error-cell {
-  color: var(--idx-error, #b91c1c);
+  color: var(--idx-down);
 }
 
 .idx-table-code-bold {
@@ -329,7 +329,7 @@
   padding: var(--idx-space-10) var(--idx-space-16) var(--idx-space-10) 44px;
   border: 1px solid var(--idx-border);
   border-radius: var(--idx-radius-lg);
-  background: var(--idx-white);
+  background: var(--idx-surface);
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }

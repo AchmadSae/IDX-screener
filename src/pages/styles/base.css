@@ -13,7 +13,7 @@
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: var(--idx-bg);
-  color: var(--idx-deep);
+  color: var(--idx-text);
   margin: var(--idx-space-0);
   -webkit-font-smoothing: antialiased;
 }

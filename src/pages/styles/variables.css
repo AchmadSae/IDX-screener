@@ -6,22 +6,52 @@
  * Fullstack developer with a focus on security and experience in trading systems.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
 :root {
-  --idx-primary: #cc3e3e;
-  --idx-primary-soft: #fde8e8;
-  --idx-deep: #1e1b1b;
+  /* Surfaces */
+  --idx-bg: #0b1220;
+  --idx-bg-elevated: #0f1729;
+  --idx-surface: #151c2c;
+  --idx-surface-2: #1c2539;
   --idx-white: #ffffff;
-  --idx-bg: #fcfcfc;
-  --idx-border: #f1f1f1;
-  --idx-text-muted: #9ca3af;
-  --idx-text-secondary: #6b7280;
-  --idx-up: #059669;
-  --idx-down: #cc3e3e;
-  --idx-radius-sm: 12px;
-  --idx-radius-md: 16px;
-  --idx-radius-lg: 24px;
+  --idx-deep: #05080f;
+
+  /* Borders */
+  --idx-border: #22304a;
+  --idx-border-strong: #2e3d5c;
+
+  /* Text */
+  --idx-text: #e6eaf2;
+  --idx-text-secondary: #9aa8be;
+  --idx-text-muted: #67748f;
+
+  /* Brand / semantic */
+  --idx-primary: #4f8cff;
+  --idx-primary-strong: #2a6fe0;
+  --idx-primary-soft: rgba(79, 140, 255, 0.14);
+  --idx-up: #10b981;
+  --idx-up-strong: #34d399;
+  --idx-down: #f6465d;
+  --idx-down-strong: #e66b6b;
+  --idx-warning: #f0b90b;
+  --idx-overlay: rgba(4, 8, 18, 0.72);
+  --idx-scrollbar: #263350;
+  --idx-focus-ring: rgba(79, 140, 255, 0.55);
+
+  /* Chips */
+  --idx-chip-up-bg: rgba(16, 185, 129, 0.13);
+  --idx-chip-down-bg: rgba(246, 70, 93, 0.13);
+  --idx-chip-neutral-bg: #1e2837;
+
+  /* Charts */
+  --idx-chart-grid: rgba(148, 163, 184, 0.07);
+  --idx-chart-cursor: rgba(148, 163, 184, 0.15);
+
+  /* Radii */
+  --idx-radius-sm: 6px;
+  --idx-radius-md: 10px;
+  --idx-radius-lg: 14px;
+
+  /* Spacing */
   --idx-space-0: 0;
   --idx-space-2: 2px;
   --idx-space-4: 4px;
@@ -47,6 +77,8 @@
   --idx-space-44: 44px;
   --idx-space-46: 46px;
   --idx-space-48: 48px;
+
+  /* Type */
   --idx-text-xs: 10px;
   --idx-text-sm: 12px;
   --idx-text-base: 14px;

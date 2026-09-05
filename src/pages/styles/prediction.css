@@ -17,7 +17,7 @@
 .idx-result-metrics > div {
   border: 1px solid var(--idx-border);
   border-radius: 8px;
-  background: var(--idx-white);
+  background: var(--idx-surface);
   padding: 14px;
 }
 
@@ -31,7 +31,7 @@
 
 .idx-prediction-kpis strong,
 .idx-result-metrics strong {
-  color: var(--idx-deep);
+  color: var(--idx-text);
   font-size: var(--idx-text-xl);
 }
 
@@ -68,7 +68,7 @@
 .idx-chip-btn {
   border: 1px solid var(--idx-border);
   border-radius: 8px;
-  background: var(--idx-white);
+  background: var(--idx-surface);
   color: var(--idx-text-secondary);
   cursor: pointer;
   font: inherit;
@@ -110,7 +110,7 @@
 
 .idx-ai-summary {
   margin: 4px 0 0;
-  color: var(--idx-deep);
+  color: var(--idx-text);
   line-height: 1.6;
 }
 
