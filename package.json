@@ -18,7 +18,8 @@
     "db:init": "tsx -r tsconfig-paths/register src/server/Bootstrap.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "tsc -p tsconfig.server.json --noEmit && vite build --mode production"
+    "typecheck:ui": "tsc -p tsconfig.app.json",
+    "check": "tsc -p tsconfig.server.json --noEmit && npm run typecheck:ui && vite build --mode production"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.4",

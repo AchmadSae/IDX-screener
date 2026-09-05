@@ -1,123 +1,101 @@
 <div align="center">
 
-# IDX Screener
+# IDX + Forex AI Screener
 
-Screener saham Indonesia: analisis pakai data, bukan feeling.
+Data-driven screening, prediction, and AI-assisted analysis for Indonesian equities (IDX), gold, silver, and major forex pairs.
 
-[![Deno](https://img.shields.io/badge/deno-2.7.4-000000?logo=deno&logoColor=ffcb00)](https://deno.com) [![price](https://img.shields.io/badge/price-free-22c55e)](https://github.com/NeaByteLab/IDX-UI) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-<table align="center">
-<tr>
-<td width="50%" style="text-align: center"><img src="./preview/1.png" alt="Screener" width="100%"/>
-<br/>
-<strong>Screener</strong>: filter kandidat, fundamental, valuasi, momentum, kekuatan sektor 26w/52w.
-</td>
-<td width="50%" style="text-align: center"><img src="./preview/2.png" alt="Detail saham" width="100%"/>
-<br/>
-<strong>Detail saham</strong>: modal fundamental, profitabilitas, valuasi, skor, momentum, chart harga.
-</td>
-</tr>
-<tr>
-<td width="50%" style="text-align: center"><img src="./preview/3.png" alt="Analisa teknikal" width="100%"/>
-<br/>
-<strong>Analisa teknikal</strong>: RSI per sektor, chart bid vs offer per sektor hari ini, ringkasan snapshot satu hari.
-</td>
-<td width="50%" style="text-align: center"><img src="./preview/4.png" alt="Historical bid vs offer" width="100%"/>
-<br/>
-<strong>Historical bid vs offer</strong>: tabel agregat per sektor, periode 1W–12M, rasio bid/offer, rata-rata hari.
-</td>
-</tr>
-</table>
 </div>
 
-## Fitur Utama
+> Analysis support only — not financial advice. Predictions are rule-based estimates and AI-assisted reasoning; past performance does not guarantee future results.
 
-- **Screener** — Filter saham fundamental dan momentum, eksklusi risiko, pagination.
-- **Skor komposit** — Skor gabungan value, quality, momentum; bobot diatur; peringkat sektor.
-- **Ringkasan teknikal di Screener** — RSI dan bid/offer per sektor, chart satu hari.
-- **Kekuatan sektor** — Pie chart kekuatan sektor, periode 26 atau 52 minggu.
-- **Detail saham** — Modal tab fundamental dan teknikal: OHLC, RSI, foreign flow.
-- **Historical bid/offer** — Agregat bid/offer per sektor, rasio dan rata-rata, periode 1W–12M.
-- **Watchlist** — Simpan saham favorit pakai bintang, untuk akses data yang lebih cepat.
-- **API + SQLite** — Backend Deno, data di SQLite, cron tiap jam fetch data IDX.
+## Features
 
-## Instalasi
+- **Screener** — fundamental/momentum filters for IDX stocks with composite scoring (value / quality / momentum), sector ranking, risk exclusions (notation, UMA, corporate action), and trading-setup presets: Fundamental, Rebound Day, Swing Trade.
+- **Prediction Lab** — rules-v2 engine generates target price, stop loss, bullish probability, confidence, and horizon for `scalping` (1 day), `swing` (14 days), and `long_term` (90 days) strategies. Works for IDX stocks, XAU/XAG metals, and 6 major forex pairs.
+- **AI Analyst (DeepSeek)** — optional DeepSeek-assisted analysis per prediction with structured output (label, probability, targets, reasons, risk warnings), input-hash caching (24h), rate limiting, and persisted run history with token usage and cost estimates. Rules-based predictions always work even without an API key.
+- **Prediction History** — global history with filters (symbol, asset class, strategy, status, date range) and outcome evaluation: predictions settle as `won` / `lost` / `expired` after their horizon, with win rate, average return, average drawdown, and calibration buckets by strategy and asset class.
+- **Forex & Metals** — daily OHLC for `XAU/USD`, `XAG/USD`, `EUR/USD`, `GBP/USD`, `USD/JPY`, `USD/CHF`, `USD/CAD`, `AUD/USD` via Yahoo Finance (no API key), with lazy top-up and graceful degradation to cached data.
+- **Markets** — sector bid/offer aggregates over 1W–12M periods with bid/offer ratio.
+- **Watchlist** — star any candidate; stored locally in your browser (device-local by design).
+- **Dark fintech UI** — sidebar navigation, KPI strip, dense tables, detail drawer, responsive down to mobile.
 
-**Prasyarat:** [Git](https://git-scm.com/install/windows) (untuk clone) dan [Deno](https://docs.deno.com/runtime/getting_started/installation/) (sebagai runtime)
+## Architecture
 
-**1. Clone repo**
+Single long-running **Node.js 20+ / Express** monolith: serves the React UI (built by Vite into `dist/`) and all API routes. Data lives in **PostgreSQL** (local dev; Supabase connection string for production) via **Drizzle ORM** with generated migrations. Optional hourly in-process ingestion cron (IDX official endpoints + Yahoo Finance) when `ENABLE_INGESTION_CRON=true`.
+
+```
+src/
+  server/            Express monolith (routes, services, repositories, jobs, schemas)
+  pages/             React UI (pages, components, hooks, styles)
+drizzle/             Git-tracked Postgres migrations
+```
+
+## Setup
+
+**Prerequisites:** Node.js 20+, PostgreSQL (local or Supabase), and optionally a [DeepSeek API key](https://platform.deepseek.com/).
 
 ```bash
 git clone https://github.com/NeaByteLab/IDX-UI.git
 cd IDX-UI
+cp .env.example .env   # edit DATABASE_URL, optionally DEEPSEEK_API_KEY
+npm install
 ```
 
-**Update dari repo (reset ke versi origin)**
-
-> [!WARNING]
-> Ini akan membuang semua perubahan lokal yang belum kamu commit.
+**Database** (first time only):
 
 ```bash
-git fetch origin
-git reset --hard origin/main
+npm run db:migrate     # apply migrations to Postgres
+npm run db:seed        # seed the 8 forex/metals instruments
+npm run db:init        # optional: backfill ~2 years of IDX data (network heavy)
 ```
 
-**2. Setup database**
+If the `idx_ui` database does not exist yet, create it in pgAdmin or run
+`npx tsx -r tsconfig-paths/register src/server/scripts/ensure-db.ts`.
 
-Dari root proyek (`IDX-UI/`), jalankan:
+## Running
+
+**Development** (UI on `http://127.0.0.1:50260`, API on `50270`):
 
 ```bash
-deno task db:generate
-deno task db:push
-deno task db:init
+npm run dev
 ```
 
-- `db:generate` — buat file migrasi SQL dari schema, saat pertama kali.
-- `db:push` — menerapkan skema ke SQLite (membuat/update tabel).
-- `db:init` — mengisi data awal (snapshot screener, summary).
-
-## Cara Menjalankan
-
-### Production
+**Production:**
 
 ```bash
-deno task ui:build && deno task api:serve
+npm run build
+ENABLE_INGESTION_CRON=true npm start   # serve on http://127.0.0.1:50270
 ```
 
-Akses di `http://127.0.0.1:50270` atau `http://localhost:50270` (port sama).
-
-> [!IMPORTANT]
-> Cronjob akan otomatis mengambil data setiap jam (jadwal: menit 0).
-
-### Development
-
-**Terminal 1 — API:**
+## Checks & tests
 
 ```bash
-deno task api:dev
-# Akses di `http://127.0.0.1:50270` atau `http://localhost:50270`
+npm run check   # server typecheck + UI typecheck + production UI build
+npm test        # vitest: rules engine, indicators, outcome evaluation, scoring fixtures
 ```
 
-**Terminal 2 — UI:**
+## Environment variables
 
-```bash
-deno task ui:dev
-# Akses di `http://127.0.0.1:50260` atau `http://localhost:50260`
-```
+| Variable | Purpose |
+|---|---|
+| `PORT` | Express port (default `50270`) |
+| `DATABASE_URL` | PostgreSQL connection string (Supabase in production) |
+| `DEEPSEEK_API_KEY` | Optional — enables AI-assisted analysis |
+| `DEEPSEEK_MODEL` | Model name (default `deepseek-chat`) |
+| `ENABLE_INGESTION_CRON` | `true` runs hourly IDX + forex ingestion and outcome evaluation in-process |
+| `DATABASE_POOL_SIZE` | Postgres pool size (default `10`) |
 
-## Dokumentasi
+## Data providers
 
-- **[Referensi API](API.md)** — Endpoint, parameter, return, dan contoh `curl` untuk integrasi & testing.
-- **[Contoh Tata Cara Menganalisa](https://x.com/NeaByteLab/status/2032285129696296987)** — Panduan singkat analisa dengan data screener (X / Twitter).
+- **IDX equities** — official IDX endpoints (screener snapshot + daily trading summaries).
+- **Forex/metals** — unofficial Yahoo Finance chart endpoint, no key required. The app fetches ~8 lightweight requests hourly at most and degrades to cached data when the provider is unreachable. For production with strict SLAs, swap the provider in `src/server/services/YahooFinance.ts`.
 
-## Build & Tes
+## Documentation
 
-**Cek** — format, lint, dan typecheck:
+- **[API reference](API.md)** — every endpoint, parameters, response shapes, and the typed error contract.
 
-```bash
-deno task check
-```
+## License
 
-## Lisensi
-
-Proyek ini dilisensikan di bawah MIT. Lihat berkas [LICENSE](LICENSE) untuk detail.
+MIT — see [LICENSE](LICENSE).

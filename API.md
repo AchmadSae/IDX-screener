@@ -1,305 +1,160 @@
-# Referensi API
-
-Semua endpoint di dokumen ini memakai method **GET**.
+# API Reference
 
 - **Base URL:** `http://127.0.0.1:50270`
-- **Dari UI (dev):** request ke `/api` di-proxy ke base URL di atas.
+- **From the dev UI:** `/api` requests are proxied to the base URL above (Vite, port 50260).
+
+## Error contract
+
+Every non-2xx response uses one shape:
+
+```json
+{ "error": { "code": "INVALID_PARAM_DATE", "message": "start and end required (yyyymmdd, 8 digits)", "requestId": "<uuid>" } }
+```
+
+The `requestId` also appears in the `X-Request-Id` response header. Common codes: `INVALID_PARAM_*`, `PREDICTION_INPUT_ERROR`, `UNKNOWN_INSTRUMENT`, `PRICE_UNAVAILABLE`, `STOCK_NOT_FOUND`, `INTERNAL_SERVER_ERROR`.
 
 ---
 
-### Health
+## Health
 
 ```http
 GET /api/health
 ```
 
-- Parameter: tidak ada
-- Return: `{ ok: boolean, service: string, ts: string, root: string }`
-- Deskripsi: Cek status layanan dan direktori kerja.
-
-**Contoh:**
+- Return: `{ ok, service, ts, root }` — service status.
 
 ```bash
 curl -s 'http://127.0.0.1:50270/api/health'
 ```
 
----
-
-### Bid-Offer
-
-```http
-GET /api/:code/bid-offer
-```
-
-- Parameter path:
-  - `code` `<string>`: Kode saham (contoh: BBCA, GOTO).
-- Parameter query:
-  - `start` `<string>`: (Wajib) Tanggal awal (yyyymmdd, 8 digit).
-  - `end` `<string>`: (Wajib) Tanggal akhir (yyyymmdd), harus ≥ start.
-- Return: `Array<{ date, bidVolume, offerVolume }>`
-- Deskripsi: Deret waktu volume bid dan offer untuk satu emiten dalam rentang tanggal. Subset dari OHLC (hanya field bid/offer).
-- Error: `400` jika code kosong atau start/end tidak valid.
-
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/BBCA/bid-offer?start=20250101&end=20250301'
-```
-
----
-
-### Candidates
-
-```http
-GET /api/candidates
-```
-
-- Parameter query:
-  - `date` `<string>`: (Opsional) Tanggal snapshot summary (yyyymmdd). Bawaan: hari ini.
-  - `defaultFilter` `<boolean>`: (Opsional) Jika true, pakai set bawaan: excludeNotation, excludeCorpAction, excludeUma, perMax=25, roeMin=0, derMax=2, momentumMin=0, momentumWeek=26.
-  - `derMax` `<number>`: (Opsional) DER maksimal.
-  - `excludeCorpAction` `<boolean>`: (Opsional) Exclude saham dengan corporate action.
-  - `excludeNotation` `<boolean>`: (Opsional) Exclude saham dengan notation.
-  - `excludeUma` `<boolean>`: (Opsional) Exclude saham UMA.
-  - `limit` `<number>`: (Opsional) Limit hasil per halaman.
-  - `minValue` `<number>`: (Opsional) Nilai transaksi minimal.
-  - `minVolume` `<number>`: (Opsional) Volume minimal.
-  - `momentumMin` `<number>`: (Opsional) Momentum minimal (%).
-  - `momentumWeek` `<number>`: (Opsional) Periode momentum: 26 atau 52 minggu. Bawaan: 26.
-  - `mw` `<number>`: (Opsional) Bobot momentum (komposit).
-  - `offset` `<number>`: (Opsional) Offset pagination.
-  - `perMax` `<number>`: (Opsional) PER maksimal.
-  - `perMin` `<number>`: (Opsional) PER minimal.
-  - `qw` `<number>`: (Opsional) Bobot quality (komposit).
-  - `roeMin` `<number>`: (Opsional) ROE minimal.
-  - `search` `<string>`: (Opsional) Filter kandidat: kode, nama emiten, atau sektor mengandung teks ini (case insensitive).
-  - `vw` `<number>`: (Opsional) Bobot value (komposit).
-  - `sector` `<string>`: (Opsional) Filter kandidat hanya dari sektor ini (exact match).
-  - `withSectorRank` `<boolean>`: (Opsional) Sertakan sectorRank dan sectorPercentile per saham.
-- Return: `{ date, totalCount, limit, offset, serverTimestamp, data[] }`
-- Deskripsi: Saham terfilter (fundamental + likuiditas + flag + sector + search) dengan skor komposit dan pagination.
-
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/candidates?defaultFilter=true&limit=10&offset=0'
-```
-
----
-
-### Foreign
-
-```http
-GET /api/:code/foreign
-```
-
-- Parameter path:
-  - `code` `<string>`: Kode saham (contoh: BBCA, GOTO).
-- Parameter query:
-  - `start` `<string>`: (Wajib) Tanggal awal (yyyymmdd, 8 digit).
-  - `end` `<string>`: (Wajib) Tanggal akhir (yyyymmdd), harus ≥ start.
-- Return: `{ code, start, end, data: Array<{ date, buy, sell, net }>, summary: { totalBuy, totalSell, totalNet, dayCount } }`
-- Deskripsi: Statistik aliran asing (buy, sell, net) per hari dalam rentang tanggal; plus agregat total dan jumlah hari.
-- Error: `400` jika code kosong atau start/end tidak valid.
-
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/BBCA/foreign?start=20250101&end=20250301'
-```
-
----
-
-### General
+## General
 
 ```http
 GET /api/general
 ```
 
-- Parameter: tidak ada
-- Return: `{ stockList, industries, sectors, subSectors, subIndustries }`
-- Deskripsi: Metadata untuk filter: daftar saham (code, name) dan daftar unik industri, sektor, subsektor, subindustri.
+- Return: `{ stockList: [{code, name}], industries[], sectors[], subSectors[], subIndustries[] }` — filter metadata for the screener UI.
 
-**Contoh:**
+## Candidates
 
-```bash
-curl -s 'http://127.0.0.1:50270/api/general'
+```http
+GET /api/candidates
 ```
 
----
+- Query params:
+  - `date` — (optional) summary snapshot date (yyyymmdd). Default: today (falls back to the latest available).
+  - `setup` — `fundamental` (default) | `rebound` | `swing`. Selects the setup preset scoring.
+  - `defaultFilter` — (optional) `true` applies tuned per-setup defaults (fundamental: perMin 3, perMax 18, roeMin 15, derMax 0.8, momentumWeek 13, momentumMin 10, minValue 10B, minVolume 1M, exclusions on; else: perMax 25, roeMin 0, derMax 2, momentumMin 0, momentumWeek 26).
+  - `perMin`, `perMax`, `roeMin`, `derMax`, `pbvMax`, `minMarketCapital`, `netMarginMin`, `minValue`, `minVolume`, `momentumWeek` (1|4|13|26), `momentumMin`, `relativeStrengthMin` — numeric filters.
+  - `excludeNotation`, `excludeCorpAction`, `excludeUma`, `smartMoneyOnly`, `requireBullishTrend`, `requireEarlyReversal`, `includeRejected` — booleans (`1`/`true`).
+  - `vw`, `qw`, `mw` — composite weights.
+  - `withSectorRank` — include `sectorRank`/`sectorPercentile` per row.
+  - `sector` — exact sector filter; `search` — case-insensitive code/name/sector substring.
+  - `limit` (default 500, max 1000), `offset` — pagination.
+  - `requireNewsSentiment`, `minNewsSentiment` — optionally attach Google News sentiment per paginated row (cached 30 min).
+- Return: `{ date, totalCount, limit, offset, serverTimestamp, data[] }` — dense candidate rows with fundamentals, technicals, scores, flags, and recommendation fields.
 
-### History Bid-Offer
+```bash
+curl -s 'http://127.0.0.1:50270/api/candidates?defaultFilter=true&limit=10&offset=0'
+```
+
+## Ranked / screener aggregates
+
+```http
+GET /api/screener/ranked
+GET /api/screener/rsi
+GET /api/screener/bid-offer
+GET /api/sector/strength
+```
+
+- `ranked`: `limit`, `offset`, `vw`/`qw`/`mw`, `withSectorRank` → ranked array (no date filter).
+- `rsi`: `date`, `period` (1–100, default 14) → `{ date, period, data: { byCode[], bySector } }`.
+- `bid-offer`: `date` → `{ date, data: [{ sector, bidVolume, offerVolume, count }] }` for one day.
+- `sector/strength`: `week` (26|52), `source` (`ohlc` or screener fields) → `[{ sector, avgMomentum, count, rank }]`.
+
+## Per-stock series
+
+```http
+GET /api/:code/ohlc
+GET /api/:code/rsi
+GET /api/:code/foreign
+GET /api/:code/bid-offer
+GET /api/stock/:code/detail
+```
+
+- Path: `code` — stock code (e.g. `BBCA`).
+- Query: `start`, `end` (required, yyyymmdd, `end >= start`); `detail` also accepts `date`.
+- Returns: OHLC+bid/offer series; RSI series with sector average (`sectorData`); foreign buy/sell/net with summary; bid/offer volumes; stock detail with fundamentals, scores, flags, and OHLC.
+- Errors: `400` for invalid code/dates, `404 STOCK_NOT_FOUND`.
+
+## History bid-offer
 
 ```http
 GET /api/history/bid-offer
 ```
 
-- Parameter query:
-  - `start` `<string>`: (Wajib) Tanggal awal (yyyymmdd, 8 digit).
-  - `end` `<string>`: (Wajib) Tanggal akhir (yyyymmdd), harus ≥ start.
-  - `limit` `<number>`: (Opsional) Maksimal rentang hari. Bawaan: 365. Jika (end − start) melebihi limit, start digeser sehingga rentang = limit hari.
-- Return: `{ start, end, byDate: Array<{ date, sectors: Record<string, { bidVolume, offerVolume, count }> }>, bySector: Array<{ sector, totalBid, totalOffer, dayCount, avgBid, avgOffer, ratio }> }`
-- Deskripsi: Data historis agregat bid/offer per sektor: per tanggal (byDate) dan agregat per sektor (bySector) dengan total, rata-rata per hari, dan rasio bid/offer. Data diambil dari summary dalam rentang tanggal.
-- Error: `400` jika start atau end tidak valid (yyyymmdd) atau end < start.
+- Query: `start`, `end` (required, yyyymmdd), `limit` (max day span, default 365 — start is shifted to keep the span).
+- Return: `{ start, end, byDate[], bySector[] }` — per-date sector aggregates and per-sector totals with `avgBid`, `avgOffer`, `ratio`.
 
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/history/bid-offer?start=20250201&end=20250301'
-curl -s 'http://127.0.0.1:50270/api/history/bid-offer?start=20240101&end=20250301&limit=90'
-```
-
----
-
-### OHLC
+## Forex / metals instruments
 
 ```http
-GET /api/:code/ohlc
+GET /api/instruments
 ```
 
-- Parameter path:
-  - `code` `<string>`: Kode saham (contoh: BBCA, GOTO).
-- Parameter query:
-  - `start` `<string>`: (Wajib) Tanggal awal (yyyymmdd, 8 digit).
-  - `end` `<string>`: (Wajib) Tanggal akhir (yyyymmdd), harus ≥ start.
-- Return: `Array<{ date, open, high, low, close, volume, change, bidVolume, offerVolume }>`
-- Deskripsi: Data OHLC + volume + change + bid/offer volume untuk satu emiten dalam rentang tanggal.
-- Error: `400` jika code kosong atau start/end tidak valid.
-
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/BBCA/ohlc?start=20250101&end=20250301'
-```
-
----
-
-### RSI
+- Return: `{ data: [{ symbol, displayName, assetClass, currency, exchange, provider, latestPrice, latestDateInt, dayChangePct }], stale }`.
+- Backfills Yahoo Finance daily bars lazily on first load; `stale: true` means cached data is older than yesterday (provider unreachable). Never fails the request.
 
 ```http
-GET /api/:code/rsi
+GET /api/instruments/:symbol/ohlc?days=90
 ```
 
-- Parameter path:
-  - `code` `<string>`: Kode saham (contoh: BBCA, GOTO).
-- Parameter query:
-  - `start` `<string>`: (Wajib) Tanggal awal (yyyymmdd, 8 digit).
-  - `end` `<string>`: (Wajib) Tanggal akhir (yyyymmdd), harus ≥ start.
-- Return: `{ code, start, end, period, data: Array<{ date, rsi }>, sector, sectorData: Array<{ date, rsi }> }`
-- Deskripsi: Deret waktu RSI(14) untuk satu emiten dalam rentang tanggal. Jika saham punya sektor, `sectorData` berisi RSI rata-rata sektor per hari (berdasarkan saham-saham dalam sektor itu).
-- Error: `400` jika code kosong atau start/end tidak valid.
+- Path: `symbol` — URL-encode pairs (`XAU%2FUSD`).
+- Query: `days` (1–365, default 90).
+- Return: `{ data: { symbol, dateInt[], priceOpen[], priceHigh[], priceLow[], priceClose[], volume[] } }` — flat series for charting.
 
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/BBCA/rsi?start=20250101&end=20250301'
-```
-
----
-
-### Screener Bid-Offer
+## Predictions
 
 ```http
-GET /api/screener/bid-offer
+POST /api/predictions
 ```
 
-- Parameter query:
-  - `date` `<string>`: (Opsional) Tanggal referensi (yyyymmdd). Bawaan: hari terakhir yang ada di summary.
-- Return: `{ date, data: Array<{ sector, bidVolume, offerVolume, count }> }` — agregat volume bid dan offer per sektor untuk satu hari. `data` diurutkan berdasarkan total volume (bid + offer) menurun.
-- Deskripsi: Agregat volume bid dan offer per sektor (universe screener) untuk tanggal tertentu. Berguna untuk chart Bid vs Offer per sektor di Analisa Teknikal.
-
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/screener/bid-offer'
-curl -s 'http://127.0.0.1:50270/api/screener/bid-offer?date=20260312'
-```
-
----
-
-### Screener Ranked
+- Body: `{ symbol, assetClass?, strategy?, currentPrice?, useDeepSeek? }`
+  - `symbol` — stock code or instrument (e.g. `BBCA`, `XAU/USD`). Required.
+  - `assetClass` — `stock` | `forex` | `metal`. Inferred from the symbol when omitted.
+  - `strategy` — `scalping` | `swing` (default) | `long_term`.
+  - `currentPrice` — optional entry price; falls back to the latest stored close.
+  - `useDeepSeek` — optional; DeepSeek failures never block the rules prediction.
+- Return `201`: `{ data: { ...prediction, aiStatus, aiRun } }` — rules-v2 output (target, stop, probabilities, horizon, risk notes) plus optional AI results.
+- Errors: `400 PREDICTION_INPUT_ERROR` / `INVALID_PARAM_STRATEGY` / `INVALID_PARAM_ASSET_CLASS` / `UNKNOWN_INSTRUMENT`, `409 PRICE_UNAVAILABLE`.
 
 ```http
-GET /api/screener/ranked
+GET /api/predictions
 ```
 
-- Parameter query:
-  - `limit` `<number>`: (Opsional) Limit hasil.
-  - `mw` `<number>`: (Opsional) Bobot momentum.
-  - `offset` `<number>`: (Opsional) Offset pagination.
-  - `qw` `<number>`: (Opsional) Bobot quality.
-  - `vw` `<number>`: (Opsional) Bobot value.
-  - `withSectorRank` `<boolean>`: (Opsional) Sertakan sectorRank dan sectorPercentile.
-- Return: `Array` baris ter-ranking (dengan pagination).
-- Deskripsi: Semua saham ter-ranking komposit tanpa filter tanggal/likuiditas.
-
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/screener/ranked?limit=20&offset=0&withSectorRank=true'
-```
-
----
-
-### Screener RSI
+- Query: `symbol`, `assetClass`, `strategy`, `status` (`open`|`won`|`lost`|`expired`), `dateFrom`, `dateTo` (yyyymmdd), `limit` (default 20, max 200), `offset`.
+- Return: `{ data: [{ ...prediction, outcome: { referencePrice, returnPercent, maxFavorableExcursion, maxAdverseExcursion, hitTarget, hitStop, evaluatedAt } | null }], meta: { totalCount, limit, offset } }`.
+- Open predictions are settled lazily on read once their horizon window has fully elapsed.
 
 ```http
-GET /api/screener/rsi
+GET /api/predictions/stats
 ```
 
-- Parameter query:
-  - `date` `<string>`: (Opsional) Tanggal referensi (yyyymmdd). Bawaan: hari terakhir yang ada di summary.
-  - `period` `<number>`: (Opsional) Periode RSI (1–100). Bawaan: 14.
-- Return: `{ date, period, data: { byCode, bySector } }` — `byCode`: array semua item (per code); `bySector`: key sector → array item.
-- Deskripsi: Satu nilai RSI terakhir per saham (seluruh universe). Tanpa pagination/sort; sort/filter di frontend. `rsi` null jika data close tidak cukup.
+- Return: `{ data: { counts: { total, open, won, lost, expired }, overall: { winRate, avgReturn, avgDrawdown, settledCount }, byStrategy[], byAssetClass[], calibration[] } }`.
+- `winRate = won / (won + lost)`; `avgReturn`/`avgDrawdown` over settled rows; `calibration` buckets bullish probability in 10-point ranges.
 
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/screener/rsi'
-curl -s 'http://127.0.0.1:50270/api/screener/rsi?date=20260311&period=14'
-```
-
----
-
-### Sector Strength
+## AI Analyst
 
 ```http
-GET /api/sector/strength
+POST /api/analyses
 ```
 
-- Parameter query:
-  - `source` `<string>`: (Opsional) `ohlc` = hitung return dari OHLC summary; kosong = pakai week26PC/week52PC dari screener.
-  - `week` `<number>`: (Opsional) Periode minggu: 26 atau 52. Bawaan: 26.
-- Return: `Array<{ sector, avgMomentum, count, rank }>`
-- Deskripsi: Rata-rata momentum per sektor, diurutkan per ranking.
-
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/sector/strength?week=26'
-```
-
----
-
-### Stock Detail
+- Body: same shape as `POST /api/predictions` — runs rules + DeepSeek **without** saving a prediction.
+- Return: `{ data: { runId, symbol, assetClass, strategy, promptVersion, model, status, rulePrediction, aiResult, aiSummary, errorMessage, tokens, estimatedCostUsd } }`.
+- `status`: `success` | `failed` | `cached` (reused a 24h input-hash hit) | `skipped` (no API key configured).
 
 ```http
-GET /api/stock/:code/detail
+GET /api/analyses?symbol=&assetClass=&limit=20
 ```
 
-- Parameter path:
-  - `code` `<string>`: Kode saham.
-- Parameter query:
-  - `date` `<string>`: (Opsional) Tanggal snapshot untuk value/volume (yyyymmdd). Bawaan: hari ini.
-  - `start` `<string>`: (Wajib) Tanggal awal rentang OHLC (yyyymmdd).
-  - `end` `<string>`: (Wajib) Tanggal akhir rentang OHLC (yyyymmdd).
-- Return: Objek detail saham: code, name, sector, industry, fundamental, skor value/quality/momentum/composite, value, volume, ohlc[], flags (hasNotation, hasCorpAction, hasUma).
-- Deskripsi: Detail fundamental, skor komposit, dan deret waktu OHLC untuk satu saham.
-- Error: `400` jika start/end tidak valid; `404` jika saham tidak ditemukan.
-
-**Contoh:**
-
-```bash
-curl -s 'http://127.0.0.1:50270/api/stock/BBCA/detail?start=20250101&end=20250301'
-```
+- Return: `{ data: [ai_analysis_runs rows] }` — recent runs (prompt version, status, summary, token usage, cost estimate).

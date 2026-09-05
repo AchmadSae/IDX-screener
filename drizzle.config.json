@@ -1,8 +1,0 @@
-{
-  "out": "./data/drizzle",
-  "schema": "./src/server/schemas/index.ts",
-  "dialect": "postgresql",
-  "dbCredentials": {
-    "url": "Set DATABASE_URL and use drizzle.config.ts for local commands"
-  }
-}
