@@ -1,8 +1,8 @@
 {
   "out": "./data/drizzle",
   "schema": "./src/server/schemas/index.ts",
-  "dialect": "sqlite",
+  "dialect": "postgresql",
   "dbCredentials": {
-    "url": "./data/database.sqlite"
+    "url": "Set DATABASE_URL and use drizzle.config.ts for local commands"
   }
 }

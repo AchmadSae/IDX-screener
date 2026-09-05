@@ -9,11 +9,10 @@
 import type { Context } from '@neabyte/deserve'
 
 export function GET(ctx: Context) {
-  const workingDir = Deno.cwd()
   return ctx.send.json({
     ok: true,
     service: 'idx-ui',
     ts: new Date().toISOString(),
-    root: workingDir
+    root: process.cwd()
   })
 }

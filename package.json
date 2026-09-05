@@ -1,0 +1,44 @@
+{
+  "name": "@neabyte/idx-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npm:dev:api\" \"npm:dev:ui\"",
+    "dev:api": "tsx watch -r tsconfig-paths/register src/server/node.ts",
+    "dev:ui": "vite --host 127.0.0.1 --port 50260",
+    "build": "npm run build:ui && npm run build:server",
+    "build:ui": "vite build --mode production",
+    "build:server": "tsc -p tsconfig.server.json --noEmit",
+    "start": "tsx -r tsconfig-paths/register src/server/node.ts",
+    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
+    "db:push": "drizzle-kit push --config drizzle.config.ts",
+    "db:init": "tsx -r tsconfig-paths/register src/server/Bootstrap.ts",
+    "check": "tsc -p tsconfig.server.json --noEmit && vite build --mode production"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.1.4",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.1",
+    "express": "^5.2.1",
+    "lucide-react": "^0.577.0",
+    "postgres": "^3.4.7",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1",
+    "recharts": "^3.8.0",
+    "vite": "^7.3.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.2.1",
+    "drizzle-kit": "^0.31.9",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

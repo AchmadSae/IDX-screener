@@ -1,0 +1,161 @@
+.idx-prediction-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.idx-prediction-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 10px;
+  min-width: min(100%, 460px);
+}
+
+.idx-prediction-kpis > div,
+.idx-result-metrics > div {
+  border: 1px solid var(--idx-border);
+  border-radius: 8px;
+  background: var(--idx-white);
+  padding: 14px;
+}
+
+.idx-prediction-kpis span,
+.idx-result-metrics span {
+  display: block;
+  color: var(--idx-text-secondary);
+  font-size: var(--idx-text-sm);
+  margin-bottom: 6px;
+}
+
+.idx-prediction-kpis strong,
+.idx-result-metrics strong {
+  color: var(--idx-deep);
+  font-size: var(--idx-text-xl);
+}
+
+.idx-prediction-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.idx-prediction-panel,
+.idx-prediction-result,
+.idx-prediction-history {
+  padding: 20px;
+}
+
+.idx-prediction-form {
+  display: grid;
+  gap: 16px;
+}
+
+.idx-prediction-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.idx-prediction-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.idx-chip-btn {
+  border: 1px solid var(--idx-border);
+  border-radius: 8px;
+  background: var(--idx-white);
+  color: var(--idx-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 10px;
+}
+
+.idx-chip-btn:hover {
+  border-color: var(--idx-primary);
+  color: var(--idx-primary);
+}
+
+.idx-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--idx-text-secondary);
+  font-size: var(--idx-text-base);
+}
+
+.idx-result-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.idx-result-score {
+  grid-column: span 3;
+}
+
+.idx-result-score strong {
+  color: var(--idx-up);
+  font-size: 32px;
+}
+
+.idx-ai-summary,
+.idx-risk-list {
+  grid-column: span 3;
+}
+
+.idx-ai-summary {
+  margin: 4px 0 0;
+  color: var(--idx-deep);
+  line-height: 1.6;
+}
+
+.idx-risk-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--idx-text-secondary);
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .idx-prediction-hero,
+  .idx-prediction-grid {
+    display: block;
+  }
+
+  .idx-prediction-kpis {
+    margin-top: 16px;
+  }
+
+  .idx-prediction-panel {
+    margin-bottom: 16px;
+  }
+
+  .idx-result-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .idx-result-score,
+  .idx-ai-summary,
+  .idx-risk-list {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .idx-prediction-kpis,
+  .idx-prediction-fields,
+  .idx-result-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .idx-result-score,
+  .idx-ai-summary,
+  .idx-risk-list {
+    grid-column: span 1;
+  }
+}

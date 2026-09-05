@@ -7,19 +7,25 @@
  */
 
 import { sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/libsql'
-import { createClient } from '@libsql/client'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 import * as Schemas from '@app/server/schemas/index.ts'
 
-const libsqlClient = createClient({
-  url: import.meta.resolve('@data/database.sqlite')
+const databaseUrl = process.env['DATABASE_URL']
+
+if (databaseUrl == null || databaseUrl.trim() === '') {
+  throw new Error('DATABASE_URL is required for Supabase Postgres')
+}
+
+const client = postgres(databaseUrl, {
+  max: Number(process.env['DATABASE_POOL_SIZE'] ?? 10),
+  prepare: false
 })
 
-const db = drizzle(libsqlClient, { schema: Schemas })
+const db = drizzle(client, { schema: Schemas })
 
 export async function initDb(): Promise<void> {
-  await db.run(sql`PRAGMA journal_mode=WAL`)
-  await db.run(sql`PRAGMA busy_timeout=5000`)
+  await db.execute(sql`select 1`)
 }
 
 export default db

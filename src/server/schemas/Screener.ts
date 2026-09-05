@@ -6,9 +6,9 @@
  * Fullstack developer with a focus on security and experience in trading systems.
  */
 
-import { real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { doublePrecision, pgTable, text } from 'drizzle-orm/pg-core'
 
-export const screener = sqliteTable('stock_screener', {
+export const screener = pgTable('stock_screener', {
   code: text('code').primaryKey(),
   name: text('name'),
   industry: text('industry'),
@@ -17,20 +17,20 @@ export const screener = sqliteTable('stock_screener', {
   subIndustry: text('sub_industry'),
   subIndustryCode: text('sub_industry_code'),
   indexCode: text('index_code'),
-  marketCapital: real('market_capital'),
-  totalRevenue: real('total_revenue'),
-  npm: real('npm'),
-  per: real('per'),
-  pbv: real('pbv'),
-  roa: real('roa'),
-  roe: real('roe'),
-  der: real('der'),
-  week4PC: real('week4_pc'),
-  week13PC: real('week13_pc'),
-  week26PC: real('week26_pc'),
-  week52PC: real('week52_pc'),
-  ytdpc: real('ytdpc'),
-  mtdpc: real('mtdpc'),
+  marketCapital: doublePrecision('market_capital'),
+  totalRevenue: doublePrecision('total_revenue'),
+  npm: doublePrecision('npm'),
+  per: doublePrecision('per'),
+  pbv: doublePrecision('pbv'),
+  roa: doublePrecision('roa'),
+  roe: doublePrecision('roe'),
+  der: doublePrecision('der'),
+  week4PC: doublePrecision('week4_pc'),
+  week13PC: doublePrecision('week13_pc'),
+  week26PC: doublePrecision('week26_pc'),
+  week52PC: doublePrecision('week52_pc'),
+  ytdpc: doublePrecision('ytdpc'),
+  mtdpc: doublePrecision('mtdpc'),
   umaDate: text('uma_date'),
   notation: text('notation'),
   status: text('status'),

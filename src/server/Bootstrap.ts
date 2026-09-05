@@ -8,6 +8,7 @@
 
 import { initDb } from '@app/server/Database.ts'
 import * as Services from '@app/server/services/index.ts'
+import { fileURLToPath } from 'node:url'
 
 export class Bootstrap {
   static async run(): Promise<void> {
@@ -83,6 +84,6 @@ export class Bootstrap {
   }
 }
 
-if (import.meta.main) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await Bootstrap.run()
 }

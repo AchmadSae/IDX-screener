@@ -6,32 +6,32 @@
  * Fullstack developer with a focus on security and experience in trading systems.
  */
 
-import { real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { doublePrecision, pgTable, text } from 'drizzle-orm/pg-core'
 
-export const summary = sqliteTable('stock_summary', {
+export const summary = pgTable('stock_summary', {
   id: text('id').primaryKey(),
-  date: real('date').notNull(),
+  date: doublePrecision('date').notNull(),
   stockCode: text('stock_code').notNull(),
   stockName: text('stock_name'),
   remarks: text('remarks'),
-  previous: real('previous'),
-  firstTrade: real('first_trade'),
-  priceOpen: real('price_open'),
-  priceHigh: real('price_high'),
-  priceLow: real('price_low'),
-  priceClose: real('price_close'),
-  change: real('change'),
-  volume: real('volume'),
-  value: real('value'),
-  frequency: real('frequency'),
-  individualIndex: real('individual_index'),
-  weightForIndex: real('weight_for_index'),
-  offerValue: real('offer_value'),
-  offerVolume: real('offer_volume'),
-  bidValue: real('bid_value'),
-  bidVolume: real('bid_volume'),
-  listedShares: real('listed_shares'),
-  tradableShares: real('tradable_shares'),
-  foreignBuy: real('foreign_buy'),
-  foreignSell: real('foreign_sell')
+  previous: doublePrecision('previous'),
+  firstTrade: doublePrecision('first_trade'),
+  priceOpen: doublePrecision('price_open'),
+  priceHigh: doublePrecision('price_high'),
+  priceLow: doublePrecision('price_low'),
+  priceClose: doublePrecision('price_close'),
+  change: doublePrecision('change'),
+  volume: doublePrecision('volume'),
+  value: doublePrecision('value'),
+  frequency: doublePrecision('frequency'),
+  individualIndex: doublePrecision('individual_index'),
+  weightForIndex: doublePrecision('weight_for_index'),
+  offerValue: doublePrecision('offer_value'),
+  offerVolume: doublePrecision('offer_volume'),
+  bidValue: doublePrecision('bid_value'),
+  bidVolume: doublePrecision('bid_volume'),
+  listedShares: doublePrecision('listed_shares'),
+  tradableShares: doublePrecision('tradable_shares'),
+  foreignBuy: doublePrecision('foreign_buy'),
+  foreignSell: doublePrecision('foreign_sell')
 })

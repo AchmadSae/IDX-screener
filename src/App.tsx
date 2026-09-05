@@ -8,11 +8,12 @@
 
 import React, { useCallback } from 'react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
-import { BarChart3, History, Home as HomeIcon, Info, LineChart } from 'lucide-react'
+import { BarChart3, BrainCircuit, History, Home as HomeIcon, Info, LineChart } from 'lucide-react'
 import Home from '@app/pages/Home.tsx'
 import About from '@app/pages/About.tsx'
 import Screener from '@app/pages/Screener.tsx'
 import Historical from '@app/pages/Historical.tsx'
+import PredictionLab from '@app/pages/PredictionLab.tsx'
 
 export default function App() {
   const location = useLocation()
@@ -50,6 +51,13 @@ export default function App() {
               <span className='idx-nav-item-text'>Historical</span>
             </Link>
             <Link
+              to='/prediction'
+              className={`idx-nav-item ${isActive('/prediction') ? 'idx-nav-item-active' : ''}`}
+            >
+              <BrainCircuit size={16} aria-hidden />
+              <span className='idx-nav-item-text'>Prediction</span>
+            </Link>
+            <Link
               to='/about'
               className={`idx-nav-item ${isActive('/about') ? 'idx-nav-item-active' : ''}`}
             >
@@ -64,6 +72,7 @@ export default function App() {
           <Route path='/' element={<Home />} />
           <Route path='/about' element={<About />} />
           <Route path='/historical' element={<Historical />} />
+          <Route path='/prediction' element={<PredictionLab />} />
           <Route path='/screener' element={<Screener />} />
         </Routes>
       </main>
