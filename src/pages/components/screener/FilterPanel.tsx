@@ -91,7 +91,7 @@ export default function FilterPanel({
                 <span>Valuation</span>
               </p>
               <p className='idx-filter-group-desc'>
-                Batas rasio PER (harga/earning), fokus pada saham yang dinilai wajar atau murah.
+                PER ratio bounds (price/earnings); focus on fairly or cheaply valued stocks.
               </p>
               <div className='idx-filter-group-fields'>
                 <div className='idx-form-group'>
@@ -300,7 +300,7 @@ export default function FilterPanel({
                 <span>Liquidity</span>
               </p>
               <p className='idx-filter-group-desc'>
-                Batas minimal nilai transaksi (Rp) dan volume agar saham cukup likuid.
+                Minimum transaction value (IDR) and volume so stocks are liquid enough.
               </p>
               <div className='idx-filter-group-fields'>
                 <div className='idx-form-group'>
@@ -347,7 +347,7 @@ export default function FilterPanel({
                 <span>Exclusions</span>
               </p>
               <p className='idx-filter-group-desc'>
-                Sembunyikan saham dengan catatan khusus, corporate action, atau pengumuman UMA.
+                Hide stocks with special notation, corporate action, or UMA announcements.
               </p>
               <div className='idx-checkbox-group'>
                 <label className='idx-checkbox-label'>

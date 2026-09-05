@@ -398,9 +398,9 @@ export default function StockDetailDrawer({
                                       {Utils.Format.formatTitleCase(String(label))}
                                     </div>
                                     <div className='idx-tooltip-row'>
-                                      <span className='idx-tooltip-swatch idx-tooltip-swatch-emiten' />
+                                      <span className='idx-tooltip-swatch idx-tooltip-swatch-stock' />
                                       <span>
-                                        {Utils.Format.formatTitleCase('RSI (emiten)')}:{' '}
+                                        {Utils.Format.formatTitleCase('RSI (stock)')}:{' '}
                                         {Utils.Format.formatNum(p.rsi, 2)}
                                       </span>
                                     </div>
