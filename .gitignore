@@ -8,7 +8,11 @@ data/
 # Vite / Node
 .vite/
 node_modules/
+.npm-cache/
 dist/
+
+# Env
+.env
 
 # IDE
 .vscode/

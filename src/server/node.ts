@@ -1,10 +1,12 @@
 import 'dotenv/config'
+import crypto from 'node:crypto'
 import express from 'express'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { initDb } from '@app/server/Database.ts'
-import * as Services from '@app/server/services/index.ts'
 import { createExpressContext } from '@app/server/http/ExpressContext.ts'
+import { isApiError } from '@app/server/http/errors.ts'
+import { IngestJob } from '@app/server/jobs/IngestJob.ts'
 
 import * as HealthRoute from '@app/server/routes/api/health.ts'
 import * as GeneralRoute from '@app/server/routes/api/general.ts'
@@ -19,10 +21,17 @@ import * as OhlcRoute from '@app/server/routes/api/[code]/ohlc.ts'
 import * as RsiRoute from '@app/server/routes/api/[code]/rsi.ts'
 import * as ForeignRoute from '@app/server/routes/api/[code]/foreign.ts'
 import * as BidOfferRoute from '@app/server/routes/api/[code]/bid-offer.ts'
-import { Prediction } from '@app/server/services/Prediction.ts'
+import * as PredictionsRoute from '@app/server/routes/api/predictions.ts'
+import * as PredictionsStatsRoute from '@app/server/routes/api/predictions/stats.ts'
+import * as InstrumentsRoute from '@app/server/routes/api/instruments.ts'
+import * as InstrumentOhlcRoute from '@app/server/routes/api/instruments/[symbol]/ohlc.ts'
+import * as AnalysesRoute from '@app/server/routes/api/analyses.ts'
 
-type GetRouteModule = {
-  GET(ctx: ReturnType<typeof createExpressContext>): Promise<unknown> | unknown
+type Context = ReturnType<typeof createExpressContext>
+
+type RouteHandlers = {
+  GET?: (ctx: Context) => Promise<unknown> | unknown
+  POST?: (ctx: Context) => Promise<unknown> | unknown
 }
 
 const currentFile = fileURLToPath(import.meta.url)
@@ -31,78 +40,63 @@ const projectRoot = path.resolve(currentDir, '../..')
 const distRoot = path.join(projectRoot, 'dist')
 const port = Number(process.env['PORT'] ?? 50270)
 
-function mountGet(app: express.Express, routePath: string, routeModule: GetRouteModule): void {
-  app.get(routePath, async (req, res, next) => {
-    try {
-      await routeModule.GET(createExpressContext(req, res))
-    } catch (error) {
-      next(error)
+function mountRoute(app: express.Express, routePath: string, handlers: RouteHandlers): void {
+  const wrap = (handler: (ctx: Context) => Promise<unknown> | unknown) => {
+    return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      try {
+        await handler(createExpressContext(req, res))
+      } catch (error) {
+        next(error)
+      }
     }
-  })
-}
-
-async function runFetchData(): Promise<void> {
-  const fetcher = new Services.Fetcher()
-  await fetcher.run()
+  }
+  if (handlers.GET != null) {
+    app.get(routePath, wrap(handlers.GET))
+  }
+  if (handlers.POST != null) {
+    app.post(routePath, wrap(handlers.POST))
+  }
 }
 
 async function main(): Promise<void> {
   const app = express()
 
   app.disable('x-powered-by')
+  app.use((_req, res, next) => {
+    const requestId = crypto.randomUUID()
+    res.locals.requestId = requestId
+    res.setHeader('X-Request-Id', requestId)
+    next()
+  })
   app.use(express.json({ limit: '1mb' }))
   app.use('/assets', express.static(path.join(distRoot, 'assets'), {
     immutable: true,
     maxAge: '1y'
   }))
 
-  mountGet(app, '/api/health', HealthRoute)
-  mountGet(app, '/api/general', GeneralRoute)
-  mountGet(app, '/api/candidates', CandidatesRoute)
-  mountGet(app, '/api/screener/ranked', RankedRoute)
-  mountGet(app, '/api/screener/rsi', ScreenerRsiRoute)
-  mountGet(app, '/api/screener/bid-offer', ScreenerBidOfferRoute)
-  mountGet(app, '/api/sector/strength', SectorStrengthRoute)
-  mountGet(app, '/api/history/bid-offer', HistoryBidOfferRoute)
-  mountGet(app, '/api/stock/:code/detail', StockDetailRoute)
-  mountGet(app, '/api/:code/ohlc', OhlcRoute)
-  mountGet(app, '/api/:code/rsi', RsiRoute)
-  mountGet(app, '/api/:code/foreign', ForeignRoute)
-  mountGet(app, '/api/:code/bid-offer', BidOfferRoute)
-
-  app.get('/api/predictions', async (req, res, next) => {
-    try {
-      const limit = typeof req.query['limit'] === 'string' ? Number(req.query['limit']) : 50
-      res.json({
-        data: await Prediction.history(Number.isFinite(limit) ? limit : 50)
-      })
-    } catch (error) {
-      next(error)
-    }
+  mountRoute(app, '/api/health', { GET: HealthRoute.GET })
+  mountRoute(app, '/api/general', { GET: GeneralRoute.GET })
+  mountRoute(app, '/api/candidates', { GET: CandidatesRoute.GET })
+  mountRoute(app, '/api/screener/ranked', { GET: RankedRoute.GET })
+  mountRoute(app, '/api/screener/rsi', { GET: ScreenerRsiRoute.GET })
+  mountRoute(app, '/api/screener/bid-offer', { GET: ScreenerBidOfferRoute.GET })
+  mountRoute(app, '/api/sector/strength', { GET: SectorStrengthRoute.GET })
+  mountRoute(app, '/api/history/bid-offer', { GET: HistoryBidOfferRoute.GET })
+  mountRoute(app, '/api/stock/:code/detail', { GET: StockDetailRoute.GET })
+  mountRoute(app, '/api/:code/ohlc', { GET: OhlcRoute.GET })
+  mountRoute(app, '/api/:code/rsi', { GET: RsiRoute.GET })
+  mountRoute(app, '/api/:code/foreign', { GET: ForeignRoute.GET })
+  mountRoute(app, '/api/:code/bid-offer', { GET: BidOfferRoute.GET })
+  mountRoute(app, '/api/predictions', {
+    GET: PredictionsRoute.GET,
+    POST: PredictionsRoute.POST
   })
-
-  app.post('/api/predictions', async (req, res, next) => {
-    try {
-      const prediction = await Prediction.create({
-        symbol: String(req.body?.symbol ?? ''),
-        assetClass: req.body?.assetClass,
-        strategy: req.body?.strategy,
-        currentPrice: req.body?.currentPrice != null ? Number(req.body.currentPrice) : undefined,
-        useDeepSeek: req.body?.useDeepSeek === true
-      })
-      res.status(201).json({ data: prediction })
-    } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({
-          error: {
-            code: 'PREDICTION_INPUT_ERROR',
-            message: error.message
-          }
-        })
-        return
-      }
-      next(error)
-    }
+  mountRoute(app, '/api/predictions/stats', { GET: PredictionsStatsRoute.GET })
+  mountRoute(app, '/api/instruments', { GET: InstrumentsRoute.GET })
+  mountRoute(app, '/api/instruments/:symbol/ohlc', { GET: InstrumentOhlcRoute.GET })
+  mountRoute(app, '/api/analyses', {
+    GET: AnalysesRoute.GET,
+    POST: AnalysesRoute.POST
   })
 
   app.use((req, res, next) => {
@@ -114,11 +108,23 @@ async function main(): Promise<void> {
   })
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    const requestId = String(res.locals.requestId ?? '')
+    if (isApiError(error)) {
+      res.status(error.statusCode).json({
+        error: {
+          code: error.code,
+          message: error.message,
+          requestId
+        }
+      })
+      return
+    }
     console.error('[server] unhandled request error:', error)
     res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Unexpected server error'
+        message: 'Unexpected server error',
+        requestId
       }
     })
   })
@@ -127,8 +133,8 @@ async function main(): Promise<void> {
 
   if (process.env['ENABLE_INGESTION_CRON'] === 'true') {
     setInterval(() => {
-      runFetchData().catch((error) => {
-        console.error('[cron] Fetch IDX data failed:', error)
+      IngestJob.run().catch((error) => {
+        console.error('[cron] ingestion job failed:', error)
       })
     }, 60 * 60 * 1000)
   }

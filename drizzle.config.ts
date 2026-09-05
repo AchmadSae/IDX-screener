@@ -8,7 +8,7 @@ if (databaseUrl == null || databaseUrl.trim() === '') {
 }
 
 export default defineConfig({
-  out: './data/drizzle',
+  out: './drizzle',
   schema: './src/server/schemas/index.ts',
   dialect: 'postgresql',
   dbCredentials: {

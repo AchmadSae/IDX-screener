@@ -6,6 +6,8 @@
  * Fullstack developer with a focus on security and experience in trading systems.
  */
 
+import 'dotenv/config'
+
 import { initDb } from '@app/server/Database.ts'
 import * as Services from '@app/server/services/index.ts'
 import { fileURLToPath } from 'node:url'

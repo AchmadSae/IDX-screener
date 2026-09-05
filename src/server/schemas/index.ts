@@ -9,3 +9,4 @@
 export * from '@app/server/schemas/Summary.ts'
 export * from '@app/server/schemas/Screener.ts'
 export * from '@app/server/schemas/Prediction.ts'
+export * from '@app/server/schemas/MarketOhlc.ts'

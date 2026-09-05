@@ -27,4 +27,19 @@ export class CronDate {
     const day = String(targetDate.getDate()).padStart(2, '0')
     return parseInt(`${year}${month}${day}`, 10)
   }
+
+  /**
+   * Jakarta calendar date (yyyymmdd) for a timestamp, so evaluation windows
+   * line up with the IDX date convention regardless of server timezone.
+   */
+  static jakartaDateIntFromDate(date: Date): number {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date)
+    const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+    return parseInt(`${byType['year']}${byType['month']}${byType['day']}`, 10)
+  }
 }

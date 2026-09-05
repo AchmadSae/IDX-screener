@@ -21,6 +21,8 @@ export function createExpressContext(
       headers: req.headers as HeadersInit
     }),
     pathname: req.path,
+    requestId: String(res.locals.requestId ?? ''),
+    body: req.body as unknown,
     query(name: string) {
       return queryValue(req.query[name])
     },

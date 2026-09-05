@@ -13,8 +13,11 @@
     "build:server": "tsc -p tsconfig.server.json --noEmit",
     "start": "tsx -r tsconfig-paths/register src/server/node.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
-    "db:push": "drizzle-kit push --config drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config drizzle.config.ts",
+    "db:seed": "tsx -r tsconfig-paths/register src/server/scripts/seed-instruments.ts",
     "db:init": "tsx -r tsconfig-paths/register src/server/Bootstrap.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "check": "tsc -p tsconfig.server.json --noEmit && vite build --mode production"
   },
   "dependencies": {
@@ -39,6 +42,7 @@
     "drizzle-kit": "^0.31.9",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
   }
 }
