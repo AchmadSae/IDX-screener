@@ -1,9 +1,29 @@
+/**
+ * Copyright (c) 2026 IDX Screener by @NeaByteLab (https://neabyte.com)
+ * SPDX-License-Identifier: MIT
+ *
+ * Open to remote work & consulting.
+ * Fullstack developer with a focus on security and experience in trading systems.
+ *
+ * Prediction orchestrator (rules-v2): assembles inputs, runs the pure rules
+ * engine, optionally calls DeepSeek (never blocking the rules result), and
+ * persists the prediction row.
+ */
+
 import { desc, eq } from 'drizzle-orm'
 import Database from '@app/server/Database.ts'
 import * as Schemas from '@app/server/schemas/index.ts'
+import { ApiError } from '@app/server/http/errors.ts'
+import { DeepSeek } from '@app/server/services/DeepSeek.ts'
+import { InstrumentService } from '@app/server/services/InstrumentService.ts'
+import { assembleRuleInput } from '@app/server/services/prediction/inputs.ts'
+import {
+  computeRulePrediction,
+  type PredictionAssetClass,
+  type PredictionStrategy
+} from '@app/server/services/prediction/rules.ts'
 
-export type PredictionStrategy = 'scalping' | 'swing' | 'long_term'
-export type PredictionAssetClass = 'stock' | 'forex' | 'metal'
+export type { PredictionAssetClass, PredictionStrategy }
 
 export type CreatePredictionInput = {
   symbol: string
@@ -13,276 +33,157 @@ export type CreatePredictionInput = {
   useDeepSeek?: boolean
 }
 
-type RulePrediction = {
-  horizonDays: number
-  entryPrice: number
-  targetPrice: number
-  stopLoss: number
-  bullishProbability: number
-  confidenceScore: number
-  ruleScore: number
-  riskNotes: string[]
-  metadata: Record<string, unknown>
+export type PredictionAiStatus = 'ok' | 'failed' | 'skipped' | 'off'
+
+export type PredictionAiRun = {
+  runId: string | null
+  status: string
+  model: string
+  promptVersion: string
+  errorMessage: string | null
+  tokens: { promptTokens: number; completionTokens: number } | null
+  estimatedCostUsd: number | null
 }
 
-type DeepSeekResult = {
-  aiScore: number | null
-  aiSummary: string | null
+export type CreatedPrediction = Record<string, unknown> & {
+  aiStatus: PredictionAiStatus
+  aiRun: PredictionAiRun | null
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value))
-}
+export const SUPPORTED_FOREX_METALS = [
+  'XAU/USD',
+  'XAG/USD',
+  'AUD/USD',
+  'EUR/USD',
+  'GBP/USD',
+  'USD/JPY',
+  'USD/CHF',
+  'USD/CAD'
+]
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
-}
-
-function normalizeSymbol(symbol: string): string {
+export function normalizeSymbol(symbol: string): string {
   return symbol.trim().toUpperCase().replace(/\s+/g, '')
 }
 
-function parseStrategy(raw: string | undefined): PredictionStrategy {
+export function parseStrategy(raw: string | undefined): PredictionStrategy {
+  if (raw === undefined || raw === '') {
+    return 'swing'
+  }
   if (raw === 'scalping' || raw === 'swing' || raw === 'long_term') {
     return raw
   }
-  return 'swing'
+  throw ApiError.badRequest(
+    'INVALID_PARAM_STRATEGY',
+    `strategy must be one of: scalping, swing, long_term (got "${raw}")`
+  )
 }
 
-function parseAssetClass(raw: string | undefined, symbol: string): PredictionAssetClass {
+export function parseAssetClass(raw: string | undefined, symbol: string): PredictionAssetClass {
+  if (raw === undefined || raw === '') {
+    if (symbol.startsWith('XAU') || symbol.startsWith('XAG')) {
+      return 'metal'
+    }
+    if (symbol.includes('/')) {
+      return 'forex'
+    }
+    return 'stock'
+  }
   if (raw === 'stock' || raw === 'forex' || raw === 'metal') {
     return raw
   }
-  if (symbol.startsWith('XAU') || symbol.startsWith('XAG')) {
-    return 'metal'
-  }
-  if (symbol.includes('/')) {
-    return 'forex'
-  }
-  return 'stock'
-}
-
-function horizonFor(strategy: PredictionStrategy): number {
-  if (strategy === 'scalping') {
-    return 1
-  }
-  if (strategy === 'long_term') {
-    return 90
-  }
-  return 14
-}
-
-function targetMoveFor(strategy: PredictionStrategy, probability: number): number {
-  const base = strategy === 'scalping' ? 0.012 : strategy === 'long_term' ? 0.12 : 0.045
-  return base * (0.75 + probability / 200)
-}
-
-async function latestStockSnapshot(symbol: string): Promise<{
-  entryPrice: number | null
-  roe: number | null
-  der: number | null
-  per: number | null
-  week13PC: number | null
-  week26PC: number | null
-  sector: string | null
-}> {
-  const latestSummary = await Database.select({
-    priceClose: Schemas.summary.priceClose
-  })
-    .from(Schemas.summary)
-    .where(eq(Schemas.summary.stockCode, symbol))
-    .orderBy(desc(Schemas.summary.date))
-    .limit(1)
-
-  const screenerRows = await Database.select({
-    roe: Schemas.screener.roe,
-    der: Schemas.screener.der,
-    per: Schemas.screener.per,
-    week13PC: Schemas.screener.week13PC,
-    week26PC: Schemas.screener.week26PC,
-    sector: Schemas.screener.sector
-  })
-    .from(Schemas.screener)
-    .where(eq(Schemas.screener.code, symbol))
-    .limit(1)
-
-  const screener = screenerRows[0]
-  return {
-    entryPrice: latestSummary[0]?.priceClose ?? null,
-    roe: screener?.roe ?? null,
-    der: screener?.der ?? null,
-    per: screener?.per ?? null,
-    week13PC: screener?.week13PC ?? null,
-    week26PC: screener?.week26PC ?? null,
-    sector: screener?.sector ?? null
-  }
-}
-
-function computeRulePrediction(
-  strategy: PredictionStrategy,
-  assetClass: PredictionAssetClass,
-  entryPrice: number,
-  snapshot: Awaited<ReturnType<typeof latestStockSnapshot>> | null
-): RulePrediction {
-  let score = 50
-  const riskNotes: string[] = []
-
-  if (assetClass === 'stock' && snapshot != null) {
-    if ((snapshot.roe ?? 0) >= 15) {
-      score += 12
-    } else {
-      riskNotes.push('ROE below preferred threshold')
-    }
-    if ((snapshot.der ?? 99) <= 0.8) {
-      score += 8
-    } else {
-      riskNotes.push('DER above preferred threshold')
-    }
-    if ((snapshot.per ?? 999) >= 3 && (snapshot.per ?? 999) <= 18) {
-      score += 8
-    } else {
-      riskNotes.push('PER outside value range')
-    }
-    if ((strategy === 'long_term' ? snapshot.week26PC : snapshot.week13PC) ?? 0 > 0) {
-      score += 10
-    } else {
-      riskNotes.push('Momentum is not supportive')
-    }
-  } else {
-    score += strategy === 'scalping' ? 4 : 0
-    riskNotes.push('Forex/metals prediction uses price-only MVP rules until provider OHLC is connected')
-  }
-
-  const bullishProbability = round2(clamp(score, 5, 95))
-  const targetMove = targetMoveFor(strategy, bullishProbability)
-  const stopMove = strategy === 'scalping' ? 0.006 : strategy === 'long_term' ? 0.055 : 0.022
-
-  return {
-    horizonDays: horizonFor(strategy),
-    entryPrice,
-    targetPrice: round2(entryPrice * (1 + targetMove)),
-    stopLoss: round2(entryPrice * (1 - stopMove)),
-    bullishProbability,
-    confidenceScore: round2(assetClass === 'stock' && snapshot != null ? 68 : 45),
-    ruleScore: bullishProbability,
-    riskNotes,
-    metadata: {
-      snapshot,
-      ruleVersion: 'rules-v1'
-    }
-  }
-}
-
-async function runDeepSeek(
-  symbol: string,
-  assetClass: PredictionAssetClass,
-  strategy: PredictionStrategy,
-  rulePrediction: RulePrediction
-): Promise<DeepSeekResult> {
-  const apiKey = process.env['DEEPSEEK_API_KEY']
-  if (apiKey == null || apiKey.trim() === '') {
-    return { aiScore: null, aiSummary: null }
-  }
-
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: process.env['DEEPSEEK_MODEL'] ?? 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a trading analysis assistant. Return concise risk-aware analysis, not financial guarantees.'
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            symbol,
-            assetClass,
-            strategy,
-            rulePrediction
-          })
-        }
-      ],
-      temperature: 0.2
-    })
-  })
-
-  if (!response.ok) {
-    throw new Error(`DeepSeek API ${response.status}`)
-  }
-
-  const json = await response.json() as {
-    choices?: { message?: { content?: string } }[]
-  }
-  const summary = json.choices?.[0]?.message?.content?.trim() ?? null
-  return {
-    aiScore: summary == null ? null : rulePrediction.bullishProbability,
-    aiSummary: summary
-  }
+  throw ApiError.badRequest(
+    'INVALID_PARAM_ASSET_CLASS',
+    `assetClass must be one of: stock, forex, metal (got "${raw}")`
+  )
 }
 
 export class Prediction {
-  static async create(input: CreatePredictionInput) {
+  static async create(input: CreatePredictionInput): Promise<CreatedPrediction> {
     const symbol = normalizeSymbol(input.symbol)
     if (symbol === '') {
-      throw new Error('symbol is required')
+      throw ApiError.badRequest('PREDICTION_INPUT_ERROR', 'symbol is required')
     }
 
     const strategy = parseStrategy(input.strategy)
     const assetClass = parseAssetClass(input.assetClass, symbol)
-    const snapshot = assetClass === 'stock' ? await latestStockSnapshot(symbol) : null
-    const entryPrice = input.currentPrice ?? snapshot?.entryPrice
 
-    if (entryPrice == null || !Number.isFinite(entryPrice) || entryPrice <= 0) {
-      throw new Error('currentPrice is required when no stored latest price is available')
+    if (assetClass !== 'stock' && !(await InstrumentService.isKnown(symbol))) {
+      throw ApiError.badRequest(
+        'UNKNOWN_INSTRUMENT',
+        `unknown instrument "${symbol}". Supported forex/metals: ${SUPPORTED_FOREX_METALS.join(', ')}`
+      )
     }
 
-    const rulePrediction = computeRulePrediction(strategy, assetClass, entryPrice, snapshot)
-    let deepSeek: DeepSeekResult = { aiScore: null, aiSummary: null }
-
-    if (input.useDeepSeek === true) {
-      try {
-        deepSeek = await runDeepSeek(symbol, assetClass, strategy, rulePrediction)
-      } catch (error) {
-        deepSeek = {
-          aiScore: null,
-          aiSummary: `DeepSeek analysis unavailable: ${error instanceof Error ? error.message : String(error)}`
-        }
-      }
-    }
+    const assembled = await assembleRuleInput(symbol, assetClass, strategy, input.currentPrice)
+    const ruleOutput = computeRulePrediction(assembled.ruleInput)
 
     const inserted = await Database.insert(Schemas.predictions)
       .values({
         symbol,
         assetClass,
         strategy,
-        horizonDays: rulePrediction.horizonDays,
-        entryPrice: rulePrediction.entryPrice,
-        targetPrice: rulePrediction.targetPrice,
-        stopLoss: rulePrediction.stopLoss,
-        bullishProbability: rulePrediction.bullishProbability,
-        confidenceScore: rulePrediction.confidenceScore,
-        ruleScore: rulePrediction.ruleScore,
-        aiScore: deepSeek.aiScore,
-        aiSummary: deepSeek.aiSummary,
-        riskNotes: rulePrediction.riskNotes,
-        metadata: rulePrediction.metadata
+        horizonDays: ruleOutput.horizonDays,
+        entryPrice: ruleOutput.entryPrice,
+        targetPrice: ruleOutput.targetPrice,
+        stopLoss: ruleOutput.stopLoss,
+        bullishProbability: ruleOutput.bullishProbability,
+        confidenceScore: ruleOutput.confidenceScore,
+        ruleScore: ruleOutput.ruleScore,
+        riskNotes: ruleOutput.riskNotes,
+        modelVersion: 'rules-v2',
+        metadata: ruleOutput.metadata
       })
       .returning()
+    let row = inserted[0]!
 
-    return inserted[0]
+    let aiStatus: PredictionAiStatus = 'off'
+    let aiRun: PredictionAiRun | null = null
+    if (input.useDeepSeek === true) {
+      const result = await DeepSeek.analyze({
+        symbol,
+        assetClass,
+        strategy,
+        entryPrice: ruleOutput.entryPrice,
+        ruleOutput,
+        closes: assembled.closes,
+        fundamentals: assembled.ruleInput.fundamentals,
+        indicators: assembled.ruleInput.indicators,
+        predictionId: row.id
+      })
+      if (result.status === 'skipped') {
+        aiStatus = 'skipped'
+      } else if (result.status === 'failed') {
+        aiStatus = 'failed'
+      } else {
+        aiStatus = 'ok'
+      }
+      aiRun = {
+        runId: result.runId,
+        status: result.status,
+        model: result.model,
+        promptVersion: result.promptVersion,
+        errorMessage: result.errorMessage,
+        tokens: result.tokens,
+        estimatedCostUsd: result.estimatedCostUsd
+      }
+      const updated = await Database.update(Schemas.predictions)
+        .set({
+          aiScore: result.parsed.bullishProbability,
+          aiSummary: result.summary
+        })
+        .where(eq(Schemas.predictions.id, row.id))
+        .returning()
+      row = updated[0] ?? row
+    }
+
+    return { ...row, aiStatus, aiRun }
   }
 
   static async history(limit = 50) {
     return await Database.select()
       .from(Schemas.predictions)
       .orderBy(desc(Schemas.predictions.createdAt))
-      .limit(clamp(limit, 1, 200))
+      .limit(Math.min(Math.max(limit, 1), 200))
   }
 }
 

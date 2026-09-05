@@ -7,6 +7,7 @@
  */
 
 import type { Context } from '@neabyte/deserve'
+import { ApiError } from '@app/server/http/errors.ts'
 import { and, asc, gte, lte } from 'drizzle-orm'
 import Database from '@app/server/Database.ts'
 import Utils from '@app/server/Utils.ts'
@@ -17,10 +18,10 @@ export async function GET(ctx: Context) {
   const startParsed = Utils.parseDate(Utils.queryString(ctx.query('start')))
   const endParsed = Utils.parseDate(Utils.queryString(ctx.query('end')))
   if (startParsed === null || endParsed === null) {
-    return ctx.send.json({ error: 'start and end required (yyyymmdd, 8 digits)' }, { status: 400 })
+    throw ApiError.badRequest('INVALID_PARAM_DATE', 'start and end required (yyyymmdd, 8 digits)')
   }
   if (endParsed < startParsed) {
-    return ctx.send.json({ error: 'end must be >= start' }, { status: 400 })
+    throw ApiError.badRequest('INVALID_PARAM_DATE', 'end must be >= start')
   }
   const maxDaysRaw = Utils.queryString(ctx.query('limit'))
   const maxDaysParsed = Utils.parseNumber(maxDaysRaw)
