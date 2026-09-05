@@ -160,7 +160,7 @@ export default function TradeAdvisor({ code, detail }: Props) {
   return (
     <div className='idx-detail-block idx-mt-12'>
       <label className='idx-form-label'>Trade Advisor</label>
-      {loading && <div className='idx-loading'>Memeriksa kondisi pasar...</div>}
+      {loading && <div className='idx-loading'>Checking market conditions…</div>}
       {error && <div className='idx-error'>{error}</div>}
       {!loading && !error && (
         <div className='idx-trade-advisor'>
@@ -176,7 +176,7 @@ export default function TradeAdvisor({ code, detail }: Props) {
             ))}
           </ul>
           <div className='idx-trade-verify idx-mt-8'>
-            <strong>Verifikasi Skor:</strong>
+            <strong>Score Verification:</strong>
             <div className='idx-ml-8'>
               <div>Detail composite: {Utils.Format.formatNum(detail.compositeScore, 3)}</div>
               <div>

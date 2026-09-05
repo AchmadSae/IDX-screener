@@ -22,20 +22,20 @@ export default function DashboardHeader({
       <div>
         <h1 className='idx-dashboard-title'>
           <BarChart3 size={28} strokeWidth={2} aria-hidden />
-          <span>Screener Saham</span>
+          <span>Stock Screener</span>
         </h1>
         <p className='idx-dashboard-subtitle'>
-          Filter Berdasarkan Skor Gabungan: <strong>Valuasi, Kualitas, dan Momentum</strong>
+          Filter Berdasarkan Skor Gabungan: <strong>Value, Quality, and Momentum</strong>
         </p>
       </div>
       <div className='idx-header-stats'>
         <div className='idx-header-stat'>
-          <span className='idx-header-stat-label'>Data Kandidat</span>
+          <span className='idx-header-stat-label'>Candidates</span>
           <span className='idx-header-stat-value'>{totalCount.toLocaleString('id-ID')}</span>
         </div>
         <div className='idx-header-stat-sep' aria-hidden='true' />
         <div className='idx-header-stat'>
-          <span className='idx-header-stat-label'>Tanggal Data</span>
+          <span className='idx-header-stat-label'>Data Date</span>
           <span className='idx-header-stat-value'>
             {date ? Utils.Format.formatDateInt(date) : '-'}
           </span>
@@ -45,8 +45,8 @@ export default function DashboardHeader({
           className={`idx-btn idx-header-refresh ${loading ? 'is-loading' : ''}`}
           onClick={onRefresh}
           disabled={loading}
-          title='Muat Ulang Data'
-          aria-label='Muat Ulang Data'
+          title='Refresh Data'
+          aria-label='Refresh Data'
         >
           <RefreshCw size={18} aria-hidden />
         </button>

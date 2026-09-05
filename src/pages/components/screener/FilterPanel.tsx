@@ -47,7 +47,7 @@ export default function FilterPanel({
       >
         <span className='idx-filter-panel-title'>
           <SlidersHorizontal size={20} aria-hidden />
-          <span>Filter Kandidat</span>
+          <span>Candidate Filters</span>
         </span>
         <span className='idx-filter-panel-chevron' aria-hidden>
           {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
@@ -59,15 +59,15 @@ export default function FilterPanel({
             <div className='idx-filter-group'>
               <p className='idx-filter-group-title'>
                 <Layers size={16} aria-hidden />
-                <span>Sektor</span>
+                <span>Sector</span>
               </p>
               <p className='idx-filter-group-desc'>
-                Tampilkan kandidat per sektor, pilih sektor untuk memfilter tabel di bawah.
+                Show candidates per sector; pick one to filter the table below.
               </p>
               <div className='idx-filter-group-fields'>
                 <div className='idx-form-group'>
                   <label className='idx-form-label' htmlFor='idx-filter-sector'>
-                    Pilih Sektor
+                    Select Sector
                   </label>
                   <select
                     id='idx-filter-sector'
@@ -75,7 +75,7 @@ export default function FilterPanel({
                     value={sectorFilter}
                     onChange={(event) => onSectorFilterChange(event.target.value)}
                   >
-                    <option value=''>Semua</option>
+                    <option value=''>All</option>
                     {sectors.map((sectorName) => (
                       <option key={sectorName} value={sectorName}>
                         {sectorName}
@@ -88,7 +88,7 @@ export default function FilterPanel({
             <div className='idx-filter-group'>
               <p className='idx-filter-group-title'>
                 <DollarSign size={16} aria-hidden />
-                <span>Valuasi</span>
+                <span>Valuation</span>
               </p>
               <p className='idx-filter-group-desc'>
                 Batas rasio PER (harga/earning), fokus pada saham yang dinilai wajar atau murah.
@@ -234,10 +234,10 @@ export default function FilterPanel({
             <div className='idx-filter-group'>
               <p className='idx-filter-group-title'>
                 <ChevronRight size={16} aria-hidden />
-                <span>Konfirmasi Momentum & Relatif</span>
+                <span>Momentum & Relative Confirmation</span>
               </p>
               <p className='idx-filter-group-desc'>
-                Pilih tipe momentum, batas minimal, dan perbandingan terhadap IHSG (Relative
+                Choose the momentum period, minimum return, and comparison against the index (Relative
                 Strength).
               </p>
               <div className='idx-filter-group-fields'>
@@ -297,7 +297,7 @@ export default function FilterPanel({
             <div className='idx-filter-group'>
               <p className='idx-filter-group-title'>
                 <Droplets size={16} aria-hidden />
-                <span>Likuiditas</span>
+                <span>Liquidity</span>
               </p>
               <p className='idx-filter-group-desc'>
                 Batas minimal nilai transaksi (Rp) dan volume agar saham cukup likuid.
@@ -344,7 +344,7 @@ export default function FilterPanel({
             <div className='idx-filter-group'>
               <p className='idx-filter-group-title'>
                 <Ban size={16} aria-hidden />
-                <span>Eksklusi</span>
+                <span>Exclusions</span>
               </p>
               <p className='idx-filter-group-desc'>
                 Sembunyikan saham dengan catatan khusus, corporate action, atau pengumuman UMA.
@@ -356,7 +356,7 @@ export default function FilterPanel({
                     checked={params.excludeNotation === true}
                     onChange={(event) => updateFilterParam('excludeNotation', event.target.checked)}
                   />
-                  Kecualikan Saham dengan Notation
+                  Exclude Stocks with Notation
                 </label>
                 <label className='idx-checkbox-label'>
                   <input
@@ -365,7 +365,7 @@ export default function FilterPanel({
                     onChange={(event) =>
                       updateFilterParam('excludeCorpAction', event.target.checked)}
                   />
-                  Kecualikan Saham Corporate Action
+                  Exclude Stocks with Corporate Action
                 </label>
                 <label className='idx-checkbox-label'>
                   <input
@@ -373,7 +373,7 @@ export default function FilterPanel({
                     checked={params.excludeUma === true}
                     onChange={(event) => updateFilterParam('excludeUma', event.target.checked)}
                   />
-                  Kecualikan Saham UMA
+                  Exclude UMA Stocks
                 </label>
               </div>
             </div>
@@ -381,7 +381,7 @@ export default function FilterPanel({
           <div className='idx-filter-actions'>
             <button type='button' className='idx-btn' onClick={onDefaultFilter}>
               <RotateCcw size={16} aria-hidden />
-              <span>Reset Ke Default</span>
+              <span>Reset To Default</span>
             </button>
             <button
               type='button'
@@ -402,7 +402,7 @@ export default function FilterPanel({
               }}
             >
               <Check size={16} aria-hidden />
-              <span>Terapkan Filter</span>
+              <span>Apply Filters</span>
             </button>
           </div>
         </>
@@ -410,7 +410,7 @@ export default function FilterPanel({
       {isApplying && (
         <div className='idx-filter-loading-overlay' role='status' aria-live='polite'>
           <div className='idx-spinner' aria-hidden />
-          <div className='idx-filter-loading-text'>Memuat kandidat...</div>
+          <div className='idx-filter-loading-text'>Loading candidates…</div>
         </div>
       )}
     </div>

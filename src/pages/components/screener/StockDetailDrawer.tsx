@@ -30,11 +30,11 @@ import Drawer from '@app/pages/components/drawer/Drawer.tsx'
 import TradeAdvisor from '@app/pages/components/screener/TradeAdvisor.tsx'
 
 const foreignPeriodOptions: Types.ForeignPeriodOption[] = [
-  { days: 30, label: '1 bln' },
-  { days: 60, label: '2 bln' },
-  { days: 90, label: '3 bln' },
-  { days: 180, label: '6 bln' },
-  { days: 360, label: '1 tahun' }
+  { days: 30, label: '1 mo' },
+  { days: 60, label: '2 mo' },
+  { days: 90, label: '3 mo' },
+  { days: 180, label: '6 mo' },
+  { days: 360, label: '1 yr' }
 ]
 
 function buildRsiChartData(rsiData: Types.RsiResponse | null): {
@@ -140,7 +140,7 @@ export default function StockDetailDrawer({
                   onClick={() => setActiveTab('fundamental')}
                 >
                   <BarChart2 size={16} aria-hidden />
-                  <span>Analisa Fundamental</span>
+                  <span>Fundamental</span>
                 </button>
                 <button
                   type='button'
@@ -150,23 +150,23 @@ export default function StockDetailDrawer({
                   onClick={() => setActiveTab('technical')}
                 >
                   <TrendingUp size={16} aria-hidden />
-                  <span>Analisa Teknikal</span>
+                  <span>Technical</span>
                 </button>
               </div>
               {activeTab === 'fundamental' && (
                 <>
                   <div className='idx-detail-sections'>
                     <section className='idx-detail-section'>
-                      <h4 className='idx-detail-section-title'>Klasifikasi</h4>
+                      <h4 className='idx-detail-section-title'>Classification</h4>
                       <div className='idx-detail-grid'>
                         <div className='idx-detail-item idx-detail-item-full'>
-                          <label>Sektor / Industri</label>
+                          <label>Sector / Industry</label>
                           <span>{[detail.sector ?? '-', detail.industry ?? '-'].join(' / ')}</span>
                         </div>
                       </div>
                     </section>
                     <section className='idx-detail-section'>
-                      <h4 className='idx-detail-section-title'>Valuasi</h4>
+                      <h4 className='idx-detail-section-title'>Valuation</h4>
                       <div className='idx-detail-grid'>
                         <div className='idx-detail-item'>
                           <label>PER</label>
@@ -179,7 +179,7 @@ export default function StockDetailDrawer({
                       </div>
                     </section>
                     <section className='idx-detail-section'>
-                      <h4 className='idx-detail-section-title'>Profitabilitas</h4>
+                      <h4 className='idx-detail-section-title'>Profitability</h4>
                       <div className='idx-detail-grid'>
                         <div className='idx-detail-item'>
                           <label>ROE</label>
@@ -201,7 +201,7 @@ export default function StockDetailDrawer({
                       </div>
                     </section>
                     <section className='idx-detail-section'>
-                      <h4 className='idx-detail-section-title'>Likuiditas</h4>
+                      <h4 className='idx-detail-section-title'>Liquidity</h4>
                       <div className='idx-detail-grid'>
                         <div className='idx-detail-item'>
                           <label>Value</label>
@@ -215,7 +215,7 @@ export default function StockDetailDrawer({
                     </section>
                   </div>
                   <div className='idx-detail-block'>
-                    <label className='idx-form-label'>Skor</label>
+                    <label className='idx-form-label'>Score</label>
                     <table className='idx-detail-table'>
                       <thead>
                         <tr>
@@ -285,7 +285,7 @@ export default function StockDetailDrawer({
                   </div>
                   {chartData.length > 0 && (
                     <>
-                      <label className='idx-form-label'>Pergerakan Harga (Close)</label>
+                      <label className='idx-form-label'>Price Movement (Close)</label>
                       <div className='idx-chart-container'>
                         <ResponsiveContainer width='100%' height='100%'>
                           <AreaChart data={chartData}>
@@ -361,7 +361,7 @@ export default function StockDetailDrawer({
                         <span className='idx-text-muted idx-ml-4'>vs Sektor {rsiData.sector}</span>
                       )}
                     </label>
-                    {rsiLoading && <div className='idx-loading'>Memuat RSI...</div>}
+                    {rsiLoading && <div className='idx-loading'>Loading RSI…</div>}
                     {rsiError && <div className='idx-error'>{rsiError}</div>}
                     {!rsiLoading && !rsiError && rsiChartData.chartData.length > 0 && (
                       <div className='idx-chart-container'>
@@ -430,7 +430,7 @@ export default function StockDetailDrawer({
                             <Line
                               type='monotone'
                               dataKey='rsi'
-                              name='Emiten'
+                              name='Issuers'
                               stroke='var(--idx-primary)'
                               strokeWidth={2}
                               dot={false}
@@ -453,12 +453,12 @@ export default function StockDetailDrawer({
                       </div>
                     )}
                     {!rsiLoading && !rsiError && rsiData && rsiData.data.length === 0 && (
-                      <p className='idx-p-muted'>Tidak ada data RSI untuk periode ini.</p>
+                      <p className='idx-p-muted'>No RSI data for this period.</p>
                     )}
                   </div>
                   <div className='idx-detail-block idx-mb-16'>
                     <label className='idx-form-label'>Volume (Bid vs Offer)</label>
-                    {ohlcLoading && <div className='idx-loading'>Memuat volume...</div>}
+                    {ohlcLoading && <div className='idx-loading'>Loading volume…</div>}
                     {ohlcError && <div className='idx-error'>{ohlcError}</div>}
                     {!ohlcLoading && !ohlcError && ohlcData && ohlcData.length > 0 && (
                       <div className='idx-chart-container'>
@@ -542,12 +542,12 @@ export default function StockDetailDrawer({
                       </div>
                     )}
                     {!ohlcLoading && !ohlcError && ohlcData && ohlcData.length === 0 && (
-                      <p className='idx-p-muted'>Tidak ada data volume untuk periode ini.</p>
+                      <p className='idx-p-muted'>No volume data for this period.</p>
                     )}
                   </div>
                   <div className='idx-detail-block idx-mb-12'>
-                    <label className='idx-form-label'>Aliran Asing (Net)</label>
-                    {foreignLoading && <div className='idx-loading'>Memuat aliran asing...</div>}
+                    <label className='idx-form-label'>Foreign Flow (Net)</label>
+                    {foreignLoading && <div className='idx-loading'>Loading foreign flow…</div>}
                     {foreignError && <div className='idx-error'>{foreignError}</div>}
                     {!foreignLoading && !foreignError && foreignData && (
                       <>
@@ -604,11 +604,11 @@ export default function StockDetailDrawer({
                                             {Utils.Format.formatTitleCase(String(label))}
                                           </div>
                                           <div>
-                                            {Utils.Format.formatTitleCase('Beli')}:{' '}
+                                            {Utils.Format.formatTitleCase('Buy')}:{' '}
                                             {Utils.Format.formatRp(row.buy)}
                                           </div>
                                           <div>
-                                            {Utils.Format.formatTitleCase('Jual')}:{' '}
+                                            {Utils.Format.formatTitleCase('Sell')}:{' '}
                                             {Utils.Format.formatRp(row.sell)}
                                           </div>
                                           <div>
@@ -643,7 +643,7 @@ export default function StockDetailDrawer({
                               </ResponsiveContainer>
                             </div>
                           )
-                          : <p className='idx-p-muted'>Tidak ada data untuk periode ini.</p>}
+                          : <p className='idx-p-muted'>No data for this period.</p>}
                       </>
                     )}
                   </div>

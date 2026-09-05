@@ -64,5 +64,12 @@ export function useWatchlist() {
     (code: string) => watchlistCodes.includes(code),
     [watchlistCodes]
   )
-  return { watchlistRows, watchlistCodes, toggleWatchlist, isInWatchlist }
+  const replaceRow = useCallback((row: Types.CandidateTableRow) => {
+    setWatchlistRows((prev) => {
+      const next = prev.map((existing) => (existing.code === row.code ? row : existing))
+      saveRows(next)
+      return next
+    })
+  }, [])
+  return { watchlistRows, watchlistCodes, toggleWatchlist, isInWatchlist, replaceRow }
 }

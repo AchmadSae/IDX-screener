@@ -1,321 +1,296 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { BrainCircuit, History, Target, TrendingUp } from 'lucide-react'
+/**
+ * Copyright (c) 2026 IDX Screener by @NeaByteLab (https://neabyte.com)
+ * SPDX-License-Identifier: MIT
+ *
+ * Open to remote work & consulting.
+ * Fullstack developer with a focus on security and experience in trading systems.
+ */
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { BrainCircuit, CandlestickChart, Sparkles } from 'lucide-react'
 import * as Utils from '@app/pages/utils/index.ts'
-
-type PredictionRow = {
-  id: string
-  symbol: string
-  assetClass: string
-  strategy: string
-  horizonDays: number
-  entryPrice: number
-  targetPrice: number
-  stopLoss: number
-  bullishProbability: number
-  confidenceScore: number
-  ruleScore: number
-  aiScore: number | null
-  aiSummary: string | null
-  riskNotes: string[]
-  status: string
-  createdAt: string
-}
-
-type PredictionResponse = {
-  data: PredictionRow
-}
-
-type HistoryResponse = {
-  data: PredictionRow[]
-}
-
-const quickSymbols = ['BBCA', 'TLKM', 'XAU/USD', 'XAG/USD', 'AUD/USD', 'EUR/USD']
-
-function strategyLabel(strategy: string): string {
-  if (strategy === 'long_term') {
-    return 'Long Term'
-  }
-  return strategy.charAt(0).toUpperCase() + strategy.slice(1)
-}
+import PageHeader from '@app/pages/components/common/PageHeader.tsx'
+import Disclaimer from '@app/pages/components/common/Disclaimer.tsx'
+import ForexDetailDrawer from '@app/pages/components/common/ForexDetailDrawer.tsx'
+import InstrumentPicker from '@app/pages/components/common/InstrumentPicker.tsx'
+import ProbabilityGauge from '@app/pages/components/common/ProbabilityGauge.tsx'
+import StrategySelector from '@app/pages/components/common/StrategySelector.tsx'
+import StatusBadge from '@app/pages/components/common/StatusBadge.tsx'
+import { useCreatePrediction, usePredictions } from '@app/pages/hooks/usePredictions.ts'
+import { useInstruments } from '@app/pages/hooks/useInstruments.ts'
+import type * as Types from '@app/pages/Types.ts'
 
 export default function PredictionLab() {
-  const [symbol, setSymbol] = useState('BBCA')
-  const [assetClass, setAssetClass] = useState('stock')
-  const [strategy, setStrategy] = useState('swing')
-  const [currentPrice, setCurrentPrice] = useState('')
+  const [searchParams] = useSearchParams()
+  const initialSymbol = searchParams.get('symbol') ?? 'BBCA'
+  const [symbol, setSymbol] = useState(initialSymbol)
+  const [assetClass, setAssetClass] = useState<Types.PredictionAssetClass>('stock')
+  const [strategy, setStrategy] = useState<Types.PredictionStrategy>('swing')
+  const [currentPrice, setCurrentPrice] = useState<string>('')
   const [useDeepSeek, setUseDeepSeek] = useState(false)
-  const [prediction, setPrediction] = useState<PredictionRow | null>(null)
-  const [history, setHistory] = useState<PredictionRow[]>([])
-  const [loading, setLoading] = useState(false)
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const latestHistory = useMemo(() => history.slice(0, 8), [history])
-
-  async function loadHistory() {
-    setHistoryLoading(true)
-    try {
-      const response = await fetch('/api/predictions?limit=50')
-      if (!response.ok) {
-        throw new Error(`History API ${response.status}`)
-      }
-      const json = await response.json() as HistoryResponse
-      setHistory(Array.isArray(json.data) ? json.data : [])
-    } finally {
-      setHistoryLoading(false)
-    }
-  }
+  const [result, setResult] = useState<Types.PredictionRow | null>(null)
+  const [showChart, setShowChart] = useState(false)
+  const { create, loading: creating, error: createError } = useCreatePrediction()
+  const { data: instruments } = useInstruments()
+  const { data: recentPredictions, refetch: refetchRecent } = usePredictions({ limit: 5 })
 
   useEffect(() => {
-    loadHistory().catch((loadError) => {
-      setError(loadError instanceof Error ? loadError.message : String(loadError))
-    })
-  }, [])
+    const fromUrl = searchParams.get('symbol')
+    if (fromUrl != null && fromUrl !== '') {
+      setSymbol(fromUrl.toUpperCase())
+    }
+  }, [searchParams])
 
-  async function handlePredict(event: React.FormEvent) {
-    event.preventDefault()
-    setLoading(true)
-    setError(null)
+  const selectedInstrument = useMemo(
+    () => instruments.find((instrument) => instrument.symbol === symbol) ?? null,
+    [instruments, symbol]
+  )
+
+  useEffect(() => {
+    if (selectedInstrument != null) {
+      setAssetClass(selectedInstrument.assetClass)
+      if (selectedInstrument.latestPrice != null) {
+        setCurrentPrice(String(selectedInstrument.latestPrice))
+      }
+    }
+  }, [selectedInstrument])
+
+  const handleSelect = useCallback((nextSymbol: string, nextAssetClass: Types.PredictionAssetClass) => {
+    setSymbol(nextSymbol)
+    setAssetClass(nextAssetClass)
+    const instrument = instruments.find((item) => item.symbol === nextSymbol)
+    setCurrentPrice(instrument?.latestPrice != null ? String(instrument.latestPrice) : '')
+    setResult(null)
+  }, [instruments])
+
+  const handleRun = useCallback(async () => {
+    setResult(null)
+    const price = currentPrice.trim() !== '' ? Number(currentPrice) : undefined
+    if (price !== undefined && !Number.isFinite(price)) {
+      return
+    }
     try {
-      const payload = {
+      const prediction = await create({
         symbol,
         assetClass,
         strategy,
-        useDeepSeek,
-        ...(currentPrice.trim() !== '' && { currentPrice: Number(currentPrice) })
-      }
-      const response = await fetch('/api/predictions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        ...(price !== undefined && { currentPrice: price }),
+        useDeepSeek
       })
-      const json = await response.json()
-      if (!response.ok) {
-        throw new Error(json?.error?.message ?? `Prediction API ${response.status}`)
-      }
-      const nextPrediction = (json as PredictionResponse).data
-      setPrediction(nextPrediction)
-      await loadHistory()
-    } catch (predictError) {
-      setError(predictError instanceof Error ? predictError.message : String(predictError))
-    } finally {
-      setLoading(false)
+      setResult(prediction)
+      refetchRecent()
+    } catch {
+      // error surfaced via useCreatePrediction
     }
-  }
+  }, [symbol, assetClass, strategy, currentPrice, useDeepSeek, create, refetchRecent])
+
+  const isForex = assetClass === 'forex' || assetClass === 'metal'
+  const formatPrice = (value: number | null | undefined) =>
+    Utils.Format.formatPrice(value, assetClass)
 
   return (
-    <div className='idx-main'>
-      <section className='idx-prediction-hero'>
-        <div>
-          <p className='idx-dashboard-subtitle'>Rules + DeepSeek assisted analysis</p>
-          <h1 className='idx-dashboard-title'>
-            <BrainCircuit size={30} strokeWidth={2} aria-hidden />
-            <span>Prediction Lab</span>
-          </h1>
-        </div>
-        <div className='idx-prediction-kpis' aria-label='Prediction summary'>
-          <div>
-            <span>Total History</span>
-            <strong>{history.length}</strong>
+    <div>
+      <PageHeader
+        title='Prediction Lab'
+        subtitle='Rules-based prediction with optional DeepSeek analysis.'
+      />
+      <div className='idx-prediction-lab-grid'>
+        <section className='idx-card idx-prediction-form'>
+          <div className='idx-card-title idx-card-title-with-icon idx-mb-16'>
+            <Sparkles size={18} aria-hidden />
+            <span>New Prediction</span>
           </div>
-          <div>
-            <span>Latest Signal</span>
-            <strong>{prediction?.bullishProbability != null ? `${prediction.bullishProbability}%` : '-'}</strong>
-          </div>
-          <div>
-            <span>Mode</span>
-            <strong>{strategyLabel(strategy)}</strong>
-          </div>
-        </div>
-      </section>
-
-      <div className='idx-prediction-grid'>
-        <section className='idx-card idx-prediction-panel'>
-          <div className='idx-card-header'>
-            <h2 className='idx-card-title idx-card-title-with-icon'>
-              <Target size={20} aria-hidden />
-              <span>New Prediction</span>
-            </h2>
-          </div>
-          <form className='idx-prediction-form' onSubmit={handlePredict}>
-            <div className='idx-form-group'>
-              <label className='idx-form-label' htmlFor='prediction-symbol'>Symbol</label>
-              <input
-                id='prediction-symbol'
-                className='idx-input'
-                value={symbol}
-                onChange={(event) => setSymbol(event.target.value.toUpperCase())}
-                placeholder='BBCA or XAU/USD'
-              />
-            </div>
-            <div className='idx-prediction-quick'>
-              {quickSymbols.map((quickSymbol) => (
-                <button
-                  key={quickSymbol}
-                  type='button'
-                  className='idx-chip-btn'
-                  onClick={() => {
-                    setSymbol(quickSymbol)
-                    setAssetClass(quickSymbol.startsWith('XAU') || quickSymbol.startsWith('XAG')
-                      ? 'metal'
-                      : quickSymbol.includes('/')
-                      ? 'forex'
-                      : 'stock')
-                  }}
-                >
-                  {quickSymbol}
-                </button>
-              ))}
-            </div>
-            <div className='idx-prediction-fields'>
-              <div className='idx-form-group'>
-                <label className='idx-form-label' htmlFor='prediction-asset'>Asset</label>
-                <select
-                  id='prediction-asset'
-                  className='idx-select'
-                  value={assetClass}
-                  onChange={(event) => setAssetClass(event.target.value)}
-                >
-                  <option value='stock'>IDX Stock</option>
-                  <option value='metal'>Metal</option>
-                  <option value='forex'>Forex</option>
-                </select>
-              </div>
-              <div className='idx-form-group'>
-                <label className='idx-form-label' htmlFor='prediction-strategy'>Strategy</label>
-                <select
-                  id='prediction-strategy'
-                  className='idx-select'
-                  value={strategy}
-                  onChange={(event) => setStrategy(event.target.value)}
-                >
-                  <option value='scalping'>Scalping</option>
-                  <option value='swing'>Swing</option>
-                  <option value='long_term'>Long Term</option>
-                </select>
-              </div>
-            </div>
-            <div className='idx-form-group'>
-              <label className='idx-form-label' htmlFor='prediction-price'>Current Price</label>
-              <input
-                id='prediction-price'
-                className='idx-input'
-                type='number'
-                min='0'
-                step='0.0001'
-                value={currentPrice}
-                onChange={(event) => setCurrentPrice(event.target.value)}
-                placeholder='Required for forex/metals until provider is connected'
-              />
-            </div>
-            <label className='idx-toggle-row'>
-              <input
-                type='checkbox'
-                checked={useDeepSeek}
-                onChange={(event) => setUseDeepSeek(event.target.checked)}
-              />
-              <span>Use DeepSeek analysis when API key is configured</span>
+          <div className='idx-field idx-mb-16'>
+            <label className='idx-field-label' htmlFor='prediction-instrument'>
+              Instrument
             </label>
-            <button type='submit' className='idx-btn-primary' disabled={loading}>
-              <TrendingUp size={16} aria-hidden />
-              <span>{loading ? 'Analyzing...' : 'Run Prediction'}</span>
-            </button>
-            {error && <div className='idx-error'>{error}</div>}
-          </form>
+            <InstrumentPicker value={symbol} onSelect={handleSelect} />
+          </div>
+          <div className='idx-field idx-mb-16'>
+            <span className='idx-field-label'>Strategy</span>
+            <StrategySelector value={strategy} onChange={setStrategy} />
+          </div>
+          <div className='idx-field idx-mb-16'>
+            <label className='idx-field-label' htmlFor='prediction-price'>
+              Entry price {isForex ? '(USD)' : '(IDR)'}
+            </label>
+            <input
+              id='prediction-price'
+              type='number'
+              step='any'
+              className='idx-input'
+              placeholder={isForex ? 'e.g. 2350.50' : 'leave blank for latest close'}
+              value={currentPrice}
+              onChange={(event) => setCurrentPrice(event.target.value)}
+            />
+          </div>
+          <label className='idx-field-check idx-mb-16'>
+            <input
+              type='checkbox'
+              checked={useDeepSeek}
+              onChange={(event) => setUseDeepSeek(event.target.checked)}
+            />
+            <span>
+              <strong>Use DeepSeek analysis</strong>
+              <span className='idx-field-check-note'>
+                Optional — rules run either way. Requires a server API key.
+              </span>
+            </span>
+          </label>
+          {createError != null && <div className='idx-error idx-mb-16'>{createError}</div>}
+          <button
+            type='button'
+            className='idx-btn idx-btn-primary idx-btn-block'
+            onClick={handleRun}
+            disabled={creating || symbol.trim() === ''}
+          >
+            {creating ? 'Generating…' : 'Generate Prediction'}
+          </button>
+          <Disclaimer />
         </section>
 
         <section className='idx-card idx-prediction-result'>
-          <div className='idx-card-header'>
-            <h2 className='idx-card-title idx-card-title-with-icon'>
-              <TrendingUp size={20} aria-hidden />
-              <span>Latest Result</span>
-            </h2>
+          <div className='idx-card-title idx-card-title-with-icon idx-mb-16'>
+            <BrainCircuit size={18} aria-hidden />
+            <span>Result</span>
           </div>
-          {prediction == null
-            ? <p className='idx-p-muted'>No prediction generated in this session.</p>
-            : (
-              <div className='idx-result-metrics'>
-                <div className='idx-result-score'>
-                  <span>Bullish Probability</span>
-                  <strong>{prediction.bullishProbability}%</strong>
+          {result == null && (
+            <p className='idx-p-muted'>
+              Choose an instrument and strategy, then generate a prediction.
+            </p>
+          )}
+          {result != null && (
+            <>
+              <div className='idx-prediction-result-hero'>
+                <ProbabilityGauge value={result.bullishProbability} />
+                <div className='idx-prediction-result-meta'>
+                  <div className='idx-prediction-result-symbol'>
+                    {result.symbol}
+                    <StatusBadge status={result.status} />
+                  </div>
+                  <div className='idx-prediction-result-strategy'>
+                    {result.strategy.replace('_', ' ')} · {result.horizonDays} day horizon
+                  </div>
+                  <div className='idx-prediction-result-model'>
+                    {result.modelVersion}
+                    {result.aiStatus != null && result.aiStatus !== 'off' && (
+                      <span
+                        className={`idx-prediction-ai-status ${
+                          result.aiStatus === 'ok' ? 'idx-prediction-ai-status-ok' : ''
+                        }`}
+                      >
+                        AI: {result.aiStatus}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <span>Entry</span>
-                  <strong>{Utils.Format.formatRp(prediction.entryPrice)}</strong>
-                </div>
-                <div>
-                  <span>Target</span>
-                  <strong>{Utils.Format.formatRp(prediction.targetPrice)}</strong>
-                </div>
-                <div>
-                  <span>Stop</span>
-                  <strong>{Utils.Format.formatRp(prediction.stopLoss)}</strong>
-                </div>
-                <div>
-                  <span>Horizon</span>
-                  <strong>{prediction.horizonDays}d</strong>
-                </div>
-                <div>
-                  <span>Confidence</span>
-                  <strong>{prediction.confidenceScore}%</strong>
-                </div>
-                {prediction.aiSummary && (
-                  <p className='idx-ai-summary'>{prediction.aiSummary}</p>
-                )}
-                {prediction.riskNotes.length > 0 && (
-                  <ul className='idx-risk-list'>
-                    {prediction.riskNotes.map((note) => <li key={note}>{note}</li>)}
-                  </ul>
-                )}
               </div>
-            )}
+              <div className='idx-prediction-metrics'>
+                <div className='idx-prediction-metric'>
+                  <span className='idx-prediction-metric-label'>Entry</span>
+                  <span className='idx-prediction-metric-value'>
+                    {formatPrice(result.entryPrice)}
+                  </span>
+                </div>
+                <div className='idx-prediction-metric'>
+                  <span className='idx-prediction-metric-label'>Target</span>
+                  <span className='idx-prediction-metric-value idx-pct-up'>
+                    {formatPrice(result.targetPrice)}
+                  </span>
+                </div>
+                <div className='idx-prediction-metric'>
+                  <span className='idx-prediction-metric-label'>Stop Loss</span>
+                  <span className='idx-prediction-metric-value idx-pct-down'>
+                    {formatPrice(result.stopLoss)}
+                  </span>
+                </div>
+                <div className='idx-prediction-metric'>
+                  <span className='idx-prediction-metric-label'>Confidence</span>
+                  <span className='idx-prediction-metric-value'>
+                    {result.confidenceScore.toFixed(0)}
+                  </span>
+                </div>
+                <div className='idx-prediction-metric'>
+                  <span className='idx-prediction-metric-label'>Rule Score</span>
+                  <span className='idx-prediction-metric-value'>
+                    {result.ruleScore.toFixed(0)}
+                  </span>
+                </div>
+                <div className='idx-prediction-metric'>
+                  <span className='idx-prediction-metric-label'>AI Score</span>
+                  <span className='idx-prediction-metric-value'>
+                    {result.aiScore != null ? result.aiScore.toFixed(0) : '—'}
+                  </span>
+                </div>
+              </div>
+              {result.riskNotes.length > 0 && (
+                <div className='idx-mt-16'>
+                  <span className='idx-field-label'>Risk Notes</span>
+                  <ul className='idx-risk-list'>
+                    {result.riskNotes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {result.aiSummary != null && (
+                <div className='idx-ai-summary idx-mt-16'>
+                  <span className='idx-field-label'>DeepSeek Analysis</span>
+                  <p>{result.aiSummary}</p>
+                  {result.aiRun != null && (
+                    <div className='idx-ai-summary-meta'>
+                      {result.aiRun.model} · {result.aiRun.promptVersion}
+                      {result.aiRun.estimatedCostUsd != null &&
+                        ` · est. $${result.aiRun.estimatedCostUsd.toFixed(4)}`}
+                    </div>
+                  )}
+                </div>
+              )}
+              {isForex && (
+                <button
+                  type='button'
+                  className='idx-btn idx-mt-16'
+                  onClick={() => setShowChart(true)}
+                >
+                  <CandlestickChart size={16} aria-hidden />
+                  <span>View Chart</span>
+                </button>
+              )}
+            </>
+          )}
         </section>
       </div>
 
-      <section className='idx-card idx-prediction-history'>
-        <div className='idx-card-header'>
-          <h2 className='idx-card-title idx-card-title-with-icon'>
-            <History size={20} aria-hidden />
-            <span>Global Prediction History</span>
-          </h2>
+      <section className='idx-card idx-mt-24'>
+        <div className='idx-card-title idx-card-title-with-icon idx-mb-16'>
+          <span>Latest Predictions</span>
+          <Link to='/history' className='idx-link idx-card-title-action'>
+            Full history
+          </Link>
         </div>
-        {historyLoading && <div className='idx-loading'>Loading prediction history...</div>}
-        {!historyLoading && latestHistory.length === 0 && (
-          <p className='idx-p-muted'>No saved prediction history yet.</p>
-        )}
-        {latestHistory.length > 0 && (
-          <div className='idx-table-wrap'>
-            <table className='idx-detail-table'>
-              <thead>
-                <tr>
-                  <th>Symbol</th>
-                  <th>Asset</th>
-                  <th>Strategy</th>
-                  <th>Entry</th>
-                  <th>Target</th>
-                  <th>Stop</th>
-                  <th>Bullish</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {latestHistory.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.symbol}</td>
-                    <td>{row.assetClass}</td>
-                    <td>{strategyLabel(row.strategy)}</td>
-                    <td>{Utils.Format.formatRp(row.entryPrice)}</td>
-                    <td>{Utils.Format.formatRp(row.targetPrice)}</td>
-                    <td>{Utils.Format.formatRp(row.stopLoss)}</td>
-                    <td>{row.bullishProbability}%</td>
-                    <td>{row.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {(recentPredictions ?? []).map((prediction) => (
+          <div key={prediction.id} className='idx-prediction-recent-row'>
+            <span className='idx-overview-prediction-symbol'>{prediction.symbol}</span>
+            <span className='idx-overview-prediction-strategy'>
+              {prediction.strategy.replace('_', ' ')}
+            </span>
+            <span>{Utils.Format.formatPrice(prediction.entryPrice, prediction.assetClass)} → {Utils.Format.formatPrice(prediction.targetPrice, prediction.assetClass)}</span>
+            <span className='idx-overview-prediction-probability'>
+              {Utils.Format.formatPct(prediction.bullishProbability)}
+            </span>
+            <StatusBadge status={prediction.status} />
           </div>
-        )}
+        ))}
       </section>
+      {showChart && result != null && (
+        <ForexDetailDrawer
+          symbol={result.symbol}
+          assetClass={result.assetClass}
+          onClose={() => setShowChart(false)}
+          onRunPrediction={() => setShowChart(false)}
+        />
+      )}
     </div>
   )
 }

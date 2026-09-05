@@ -11,124 +11,118 @@ import { Info } from 'lucide-react'
 
 export default function About() {
   return (
-    <div className='idx-main'>
+    <div>
       <div className='idx-card idx-about-card'>
         <h1 className='idx-dashboard-title idx-about-title'>
           <Info size={28} strokeWidth={2} aria-hidden />
-          <span>Tentang Aplikasi</span>
+          <span>About This App</span>
         </h1>
         <p className='idx-about-intro'>
-          Dashboard gratis untuk screening dan analisa saham pasar Indonesia{' '}
+          Free screening, prediction, and AI-assisted analysis for Indonesian
+          equities (IDX), gold, silver, and major forex pairs —{' '}
           <strong>by @NeaByteLab</strong>.
         </p>
 
         <div className='idx-home-article'>
           <p className='idx-home-p'>
-            <strong>IDX Screener</strong> adalah aplikasi web yang menyediakan{' '}
-            <strong>dashboard screening dan analisa saham</strong>{' '}
-            untuk pasar modal Indonesia secara{' '}
-            <strong>gratis</strong>. Aplikasi ini memudahkan Anda menyaring emiten berdasarkan
-            fundamental (<strong>valuasi</strong>, <strong>profitabilitas</strong>,{' '}
-            <strong>leverage</strong>), <strong>momentum</strong> harga, dan{' '}
-            <strong>likuiditas</strong>, lalu mengurutkannya dengan skor gabungan sehingga Anda
-            punya daftar kandidat yang terstruktur untuk riset lanjutan, bukan sekadar daftar saham
-            acak atau rekomendasi tanpa dasar terukur.
+            The <strong>IDX + Forex AI Screener</strong> helps you filter issuers by
+            fundamentals (<strong>valuation</strong>, <strong>profitability</strong>,{' '}
+            <strong>leverage</strong>), price <strong>momentum</strong>, and{' '}
+            <strong>liquidity</strong>, then ranks them with a composite score — a structured
+            candidate list for further research, not a random list of tickers.
           </p>
           <p className='idx-home-p'>
-            Data fundamental dan ringkasan perdagangan diambil dari sumber resmi (termasuk data
-            terbuka dari bursa dan pihak terkait) serta diperbarui secara berkala. Skor dihitung di
-            server dengan metodologi factor investing (<strong>value</strong>,{' '}
-            <strong>quality</strong>,{' '}
-            <strong>momentum</strong>) yang lazim dipakai dalam riset akademik dan manajemen
-            portofolio, rumus <strong>normalisasi</strong> dan <strong>bobot</strong>{' '}
-            diterapkan seragam ke seluruh emiten sehingga perbandingan antarsaham adil. Dengan
-            begitu, <strong>ranking</strong>{' '}
-            konsisten, dapat direproduksi, dan dapat diandalkan sebagai titik awal analisa maupun
-            riset lanjutan.
+            Fundamental data and trading summaries come from official sources (IDX public
+            endpoints); forex and metals daily bars come from the unofficial Yahoo Finance
+            chart endpoint (no API key required). Scores are computed on the server with a
+            factor-investing methodology (<strong>value</strong>, <strong>quality</strong>,{' '}
+            <strong>momentum</strong>) with uniform normalization and weights across all
+            issuers, so rankings stay consistent and reproducible.
           </p>
 
-          <h2 className='idx-home-h2'>Yang Bisa Anda Lakukan</h2>
+          <h2 className='idx-home-h2'>What You Can Do</h2>
           <ul className='idx-home-ul'>
             <li className='idx-home-li'>
-              <strong>Screener</strong>: Lihat daftar kandidat saham yang lolos filter, diurutkan
-              berdasarkan skor gabungan (<strong>composite</strong>). Tabel menampilkan kode, nama
-              emiten, sektor, <strong>PER</strong>, <strong>ROE</strong>,{' '}
-              <strong>DER</strong>, return <strong>26w</strong> & <strong>52w</strong>, serta{' '}
-              <strong>persentil</strong> <strong>composite</strong>.
+              <strong>Screener</strong>: ranked candidates with code, name, sector,{' '}
+              <strong>PER</strong>, <strong>ROE</strong>, <strong>DER</strong>, 26w/52w returns,
+              and composite percentile. Setup presets: Fundamental, Rebound Day, Swing Trade.
             </li>
             <li className='idx-home-li'>
-              <strong>Filter</strong>: Atur batas valuasi (<strong>PER</strong>{' '}
-              min/max), fundamental (<strong>ROE</strong> min, <strong>DER</strong>{' '}
-              max), momentum (periode{' '}
-              <strong>26w</strong>/<strong>52w</strong>, batas minimal return),{' '}
-              <strong>likuiditas</strong> (min <strong>value</strong> &{' '}
-              <strong>volume</strong>), dan opsi eksklusi (<strong>notation</strong>,{' '}
-              <strong>corporate action</strong>,{' '}
-              <strong>UMA</strong>) agar daftar sesuai profil risiko dan preferensi Anda.
+              <strong>Prediction Lab</strong>: rules-v2 engine generates target price, stop loss,
+              bullish probability, confidence, and horizon for{' '}
+              <strong>scalping</strong> (1 day), <strong>swing</strong> (14 days), and{' '}
+              <strong>long term</strong> (90 days) strategies — for IDX stocks, metals, and
+              forex pairs.
             </li>
             <li className='idx-home-li'>
-              <strong>Kekuatan Sektor</strong>: Lihat rata-rata <strong>momentum</strong>{' '}
-              per sektor (<strong>26w</strong> atau{' '}
-              <strong>52w</strong>) untuk konteks makro: sektor mana yang secara agregat sedang
-              positif atau negatif.
+              <strong>AI Analyst</strong>: optional DeepSeek-assisted analysis with structured
+              output (label, probability, targets, reasons, risk warnings). Rules-based
+              predictions always work without an API key.
             </li>
             <li className='idx-home-li'>
-              <strong>Detail Saham</strong>: Klik baris di tabel untuk membuka modal berisi{' '}
-              <strong>klasifikasi</strong>, <strong>valuasi</strong>,{' '}
-              <strong>profitabilitas</strong>, <strong>leverage</strong>, skor per pilar,{' '}
-              <strong>momentum</strong>{' '}
-              multi-horizon, dan grafik harga (<strong>OHLC</strong>) 90 hari terakhir.
+              <strong>History</strong>: every prediction is tracked and settled against actual
+              prices after its horizon — win rate, average return, average drawdown, and
+              calibration buckets by strategy and asset class.
+            </li>
+            <li className='idx-home-li'>
+              <strong>Markets</strong>: sector bid/offer aggregates over 1W–12M periods with
+              bid/offer ratio, plus per-sector RSI and bid-vs-offer views.
+            </li>
+            <li className='idx-home-li'>
+              <strong>Watchlist</strong>: star candidates from the screener; stored locally in
+              this browser (device-local by design).
             </li>
           </ul>
-          <p className='idx-home-p'>
-            Semua fitur di atas tersedia tanpa biaya. Untuk penjelasan rumus skor,{' '}
-            <strong>normalisasi</strong>, dan urutan filter, buka tab <strong>Metodologi</strong>,
-            {' '}
-            <strong>Skor</strong>, <strong>Filter & Risiko</strong>, serta{' '}
-            <strong>Cara Pakai</strong> di halaman <strong>Beranda</strong>.
-          </p>
 
-          <h3 className='idx-home-h3'>Metodologi Singkat</h3>
+          <h3 className='idx-home-h3'>Methodology in Brief</h3>
           <p className='idx-home-p'>
-            Skor gabungan dibangun dari tiga pilar dengan <strong>bobot</strong>{' '}
-            dan indikator berikut:
+            The composite score combines three pillars with these weights and indicators:
           </p>
           <ul className='idx-home-ul'>
             <li className='idx-home-li'>
-              <strong>Valuasi (40%)</strong>: <strong>PER</strong> & <strong>PBV</strong>{' '}
-              rendah = relatif murah.
+              <strong>Valuation (40%)</strong>: low <strong>PER</strong> &{' '}
+              <strong>PBV</strong> = relatively cheap.
             </li>
             <li className='idx-home-li'>
-              <strong>Kualitas (30%)</strong>: <strong>ROE</strong>, <strong>ROA</strong>,{' '}
-              <strong>DER</strong> untuk profitabilitas dan kesehatan utang.
+              <strong>Quality (30%)</strong>: <strong>ROE</strong>, <strong>ROA</strong>,{' '}
+              <strong>DER</strong> for profitability and debt health.
             </li>
             <li className='idx-home-li'>
-              <strong>Momentum (30%)</strong>: return <strong>26w</strong>/<strong>52w</strong>{' '}
-              untuk tren harga.
+              <strong>Momentum (30%)</strong>: 26w/52w returns for price trend.
             </li>
           </ul>
           <p className='idx-home-p'>
-            Nilai di-<strong>normalisasi</strong>{' '}
-            ke skala 0-1 lalu di-<strong>bobot</strong>. Indikator yang &quot;lebih rendah = lebih
-            baik&quot; (<strong>PER</strong>, <strong>PBV</strong>,{' '}
-            <strong>DER</strong>) di-inversi agar <strong>ranking</strong> sejalan dengan logika
-            {' '}
-            <strong>value</strong> dan <strong>kualitas</strong>.
+            Values are <strong>normalized</strong> to a 0–1 scale and then{' '}
+            <strong>weighted</strong>. Indicators where &quot;lower is better&quot; ({' '}
+            <strong>PER</strong>, <strong>PBV</strong>, <strong>DER</strong>) are inverted so
+            the ranking aligns with value and quality logic.
+          </p>
+          <p className='idx-home-p'>
+            The rules-v2 prediction engine scores fundamentals (stocks) or technicals
+            (forex/metals: EMA trend, RSI, 20-bar return) and sizes targets/stops with ATR
+            volatility — base percentages act as floors. Prediction outcomes are evaluated
+            from stored OHLC data after each horizon: <strong>won</strong> when the target is
+            reached first, <strong>lost</strong> when the stop is hit first,{' '}
+            <strong>expired</strong> when neither is touched.
+          </p>
+          <p className='idx-home-p'>
+            AI analyses are cached for 24 hours by input hash, rate-limited, and recorded in
+            the run history with token usage and cost estimates. Manual review of at least 30
+            saved AI analyses is recommended before treating model output as
+            production-ready.
           </p>
 
           <div className='idx-home-note idx-home-note-mt24'>
-            <strong>Disclaimer</strong>: Gunakan informasi di <strong>screener</strong> dan{' '}
-            <strong>detail saham</strong> hanya sebagai <em>awal riset</em>{' '}
-            dan bahan pertimbangan, bukan satu-satunya dasar keputusan investasi. Selalu lakukan
-            riset mandiri (
-            <strong>due diligence</strong>), baca laporan keuangan dan pengumuman emiten, serta
-            pertimbangkan risiko pasar, kondisi makro, dan fundamental perusahaan sebelum
-            berinvestasi. Data dan skor di sini bersifat informatif serta tidak menjamin hasil di
-            masa depan, aplikasi ini tidak memberikan rekomendasi jual/beli maupun{' '}
-            <strong>nasihat investasi</strong>. Semua keputusan investasi sepenuhnya menjadi
-            tanggung jawab pengguna. Pengembang aplikasi tidak bertanggung jawab atas segala
-            kerugian, klaim, tuntutan, atau konsekuensi lain yang timbul dari penggunaan data, skor,
-            dan fitur di aplikasi ini.
+            <strong>Disclaimer</strong>: Use the screener, predictions, and AI analysis only
+            as a <em>starting point for research</em> — never as the sole basis for an
+            investment decision. Always do your own due diligence, read financial reports and
+            issuer announcements, and consider market risk, macro conditions, and company
+            fundamentals before investing. Data and scores here are informational and do not
+            guarantee future results; this app does not provide buy/sell recommendations or{' '}
+            <strong>investment advice</strong>, and prediction outputs are not guaranteed
+            profit. All investment decisions remain entirely the user&apos;s responsibility.
+            The developer is not liable for any losses, claims, or consequences arising from
+            the use of this app.
           </div>
         </div>
       </div>

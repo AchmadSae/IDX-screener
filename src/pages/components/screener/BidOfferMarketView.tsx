@@ -31,7 +31,7 @@ export default function BidOfferMarketView({
   if (loading) {
     return (
       <div className='idx-card idx-card-center'>
-        <p className='idx-p-muted'>Memuat bid/offer market...</p>
+        <p className='idx-p-muted'>Loading bid/offer market…</p>
       </div>
     )
   }
@@ -40,7 +40,7 @@ export default function BidOfferMarketView({
       <div className='idx-error idx-mt-16'>
         {error}
         <button type='button' className='idx-btn idx-mt-8' onClick={onRefetch}>
-          Coba lagi
+          Try again
         </button>
       </div>
     )
@@ -54,11 +54,11 @@ export default function BidOfferMarketView({
       <div className='idx-card-header'>
         <h3 className='idx-card-title idx-card-title-with-icon'>
           <BarChart2 size={20} aria-hidden />
-          <span>Bid vs Offer (Per Sektor)</span>
+          <span>Bid vs Offer (by Sector)</span>
         </h3>
       </div>
       {chartData.length === 0
-        ? <p className='idx-p-muted'>Tidak ada data bid/offer.</p>
+        ? <p className='idx-p-muted'>No bid/offer data.</p>
         : (
           <div className='idx-rsi-chart-wrap'>
             <ResponsiveContainer width='100%' height={Math.max(360, chartData.length * 36)}>
@@ -108,7 +108,7 @@ export default function BidOfferMarketView({
                           {Utils.Format.formatNum(p.offerVolume, 0)}
                         </div>
                         <div>
-                          {Utils.Format.formatTitleCase('Emiten')}: {p.count}
+                          {Utils.Format.formatTitleCase('Issuers')}: {p.count}
                         </div>
                       </div>
                     )

@@ -39,7 +39,7 @@ export default function RsiMarketView({
         const avg = sectorAvgRsi(items)
         const withRsi = items.filter((x) => x.rsi != null).length
         return {
-          sector: sector || '(Tanpa sektor)',
+          sector: sector || '(No sector)',
           count: items.length,
           withRsi,
           avg: avg ?? 0,
@@ -52,7 +52,7 @@ export default function RsiMarketView({
   if (loading) {
     return (
       <div className='idx-card idx-card-center'>
-        <p className='idx-p-muted'>Memuat RSI market...</p>
+        <p className='idx-p-muted'>Loading RSI market…</p>
       </div>
     )
   }
@@ -61,7 +61,7 @@ export default function RsiMarketView({
       <div className='idx-error idx-mt-16'>
         {error}
         <button type='button' className='idx-btn idx-mt-8' onClick={onRefetch}>
-          Coba lagi
+          Try again
         </button>
       </div>
     )
@@ -75,11 +75,11 @@ export default function RsiMarketView({
       <div className='idx-card-header'>
         <h3 className='idx-card-title idx-card-title-with-icon'>
           <Activity size={20} aria-hidden />
-          <span>Relative Strength (Per Sektor)</span>
+          <span>RSI (by Sector)</span>
         </h3>
       </div>
       {chartData.length === 0
-        ? <p className='idx-p-muted'>Tidak ada data RSI.</p>
+        ? <p className='idx-p-muted'>No RSI data.</p>
         : (
           <div className='idx-rsi-chart-wrap'>
             <ResponsiveContainer width='100%' height={Math.max(360, chartData.length * 36)}>
@@ -122,10 +122,10 @@ export default function RsiMarketView({
                           {Utils.Format.formatTitleCase(p.sector)}
                         </div>
                         <div>
-                          {Utils.Format.formatTitleCase('RSI (rata)')}: {p.avgLabel}
+                          {Utils.Format.formatTitleCase('RSI (avg)')}: {p.avgLabel}
                         </div>
                         <div>
-                          {Utils.Format.formatTitleCase('Emiten')}: {p.withRsi}/{p.count}
+                          {Utils.Format.formatTitleCase('Issuers')}: {p.withRsi}/{p.count}
                         </div>
                       </div>
                     )

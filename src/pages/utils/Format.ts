@@ -58,6 +58,31 @@ export default class Format {
     return numericValue.toLocaleString('id-ID')
   }
 
+  /**
+   * Asset-aware price formatting: forex/metal prices keep up to 4 decimals
+   * for small values while IDR stock prices keep 2.
+   */
+  static formatPrice(
+    numericValue: number | null | undefined,
+    assetClass: string | null | undefined
+  ): string {
+    if (numericValue == null || !Number.isFinite(numericValue)) {
+      return '-'
+    }
+    const decimals =
+      assetClass === 'forex' || assetClass === 'metal'
+        ? Math.abs(numericValue) < 1
+          ? 4
+          : Math.abs(numericValue) < 100
+          ? 3
+          : 2
+        : 2
+    return numericValue.toLocaleString('id-ID', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    })
+  }
+
   static getTodayDateInt(): number {
     const now = new Date()
     return now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()

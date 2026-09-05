@@ -40,7 +40,7 @@ export default function SectorStrength({
       <div className='idx-sector-header'>
         <h3 className='idx-card-title idx-card-title-with-icon'>
           <Layers size={20} aria-hidden />
-          <span>Kekuatan Sektor</span>
+          <span>Sector Strength</span>
         </h3>
         <div className='idx-tabs'>
           <button
@@ -73,9 +73,9 @@ export default function SectorStrength({
           </button>
         </div>
       </div>
-      {loading && <div className='idx-loading'>Memuat...</div>}
+      {loading && <div className='idx-loading'>Loading…</div>}
       {!loading && data && data.length === 0 && (
-        <p className='idx-p-muted idx-py-16'>Tidak ada data sektor.</p>
+        <p className='idx-p-muted idx-py-16'>No sector data.</p>
       )}
       {!loading && data && data.length > 0 && (
         <>
@@ -112,7 +112,7 @@ export default function SectorStrength({
                         Utils.Format.formatPct(
                           avgMomentum
                         )
-                      } (${count} ${Utils.Format.formatTitleCase('emiten')})`,
+                      } (${count} ${Utils.Format.formatTitleCase('issuers')})`,
                       ''
                     ]
                   }}

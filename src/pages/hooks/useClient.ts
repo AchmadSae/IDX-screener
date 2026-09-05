@@ -21,7 +21,17 @@ export async function fetchApi<T>(
       }
     }
   }
-  const init: RequestInit = options?.signal != null ? { signal: options.signal } : {}
+  const method = options?.method ?? 'GET'
+  const init: RequestInit = {
+    ...(options?.signal != null ? { signal: options.signal } : {}),
+    method,
+    ...(options?.body !== undefined
+      ? {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(options.body)
+        }
+      : {})
+  }
   const response = await fetch(url.toString(), init)
   if (!response.ok) {
     const errorBody = await response.text()

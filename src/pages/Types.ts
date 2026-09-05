@@ -144,6 +144,8 @@ export interface CandidatesTableProps {
 
 export interface ClientOptions {
   signal?: AbortSignal
+  method?: 'GET' | 'POST'
+  body?: unknown
 }
 
 export interface DashboardHeaderProps {

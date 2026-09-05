@@ -35,13 +35,13 @@ export default function Historical() {
   }, [data])
 
   return (
-    <div className='idx-main'>
+    <div>
       <section className='idx-card idx-px-24 idx-py-16 idx-historical-card'>
         <div className='idx-dashboard-header idx-mb-0'>
           <div>
             <h2 className='idx-dashboard-title'>
               <History size={28} strokeWidth={2} aria-hidden />
-              <span>Bid vs Offer Historis</span>
+              <span>Bid vs Offer History</span>
             </h2>
             <p className='idx-dashboard-subtitle'>
               Periode: {Utils.Format.formatDateInt(start)} &ndash; {Utils.Format.formatDateInt(end)}
@@ -62,11 +62,11 @@ export default function Historical() {
             ))}
           </div>
         </div>
-        {loading && <div className='idx-loading'>Memuat data bid/offer historis...</div>}
+        {loading && <div className='idx-loading'>Loading bid/offer history…</div>}
         {!loading && error && <div className='idx-error'>{error}</div>}
         {!loading && !error && sectorRows.length === 0 && (
           <div className='idx-card-center'>
-            <p className='idx-p-muted'>Tidak ada data bid/offer historis untuk periode ini.</p>
+            <p className='idx-p-muted'>No bid/offer history for this period.</p>
           </div>
         )}
         {!loading && !error && sectorRows.length > 0 && (
@@ -74,12 +74,12 @@ export default function Historical() {
             <table className='idx-detail-table idx-historical-table'>
               <thead>
                 <tr>
-                  <th>Sektor</th>
+                  <th>Sector</th>
                   <th>Total Bid</th>
                   <th>Total Offer</th>
-                  <th>Hari</th>
-                  <th>Rata-rata Bid/Hari</th>
-                  <th>Rata-rata Offer/Hari</th>
+                  <th>Days</th>
+                  <th>Avg Bid/Day</th>
+                  <th>Avg Offer/Day</th>
                   <th>Bid/Offer</th>
                 </tr>
               </thead>

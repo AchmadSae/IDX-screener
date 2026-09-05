@@ -75,10 +75,10 @@ export default function CandidatesTable({
           <input
             type='search'
             className='idx-table-search-input'
-            placeholder='Cari Kode, Nama Emiten, Atau Sektor...'
+            placeholder='Search code, name, or sector...'
             value={searchValue}
             onChange={(event) => onSearchChange(event.target.value)}
-            aria-label='Cari Kode, Nama Emiten, Atau Sektor'
+            aria-label='Search code, name, or sector'
           />
         </div>
       )}
@@ -93,8 +93,8 @@ export default function CandidatesTable({
                       <Star size={14} aria-hidden className='idx-table-star-header' />
                     </th>
                   )}
-                  <th className='idx-table-col-kode'>Kode</th>
-                  <th className='idx-table-col-sector'>Sektor</th>
+                  <th className='idx-table-col-kode'>Code</th>
+                  <th className='idx-table-col-sector'>Sector</th>
                   <th className='idx-table-th-right'>Price</th>
                   <th className='idx-table-th-right'>Chg</th>
                   <th className='idx-table-th-right'>Vol</th>
@@ -102,7 +102,7 @@ export default function CandidatesTable({
                   <th className='idx-table-th-right'>RSI</th>
                   <th className='idx-table-th-right'>{setup === 'swing' ? 'ADX' : 'EMA10'}</th>
                   <th className='idx-table-th-right'>Score</th>
-                  <th>Alasan</th>
+                  <th>Reasons</th>
                 </tr>
               )
               : (
@@ -112,9 +112,9 @@ export default function CandidatesTable({
                       <Star size={14} aria-hidden className='idx-table-star-header' />
                     </th>
                   )}
-                  <th className='idx-table-col-kode'>Kode</th>
-                  <th className='idx-table-col-nama'>Nama Emiten</th>
-                  <th className='idx-table-col-sector'>Sektor</th>
+                  <th className='idx-table-col-kode'>Code</th>
+                  <th className='idx-table-col-nama'>Name</th>
+                  <th className='idx-table-col-sector'>Sector</th>
                   <th className='idx-table-th-right'>PER</th>
                   <th className='idx-table-th-right'>ROE</th>
                   <th className='idx-table-th-right'>DER</th>
@@ -136,7 +136,7 @@ export default function CandidatesTable({
             {showLoadingRow && (
               <tr className='idx-table-message-row'>
                 <td colSpan={columnCount} className='idx-table-empty-cell'>
-                  Memuat kandidat...
+                  Loading candidates…
                 </td>
               </tr>
             )}
@@ -169,8 +169,8 @@ export default function CandidatesTable({
                         onClick={(e) => handleStarClick(candidateRow.code, candidateRow, e)}
                         onKeyDown={(e) => handleStarKeyDown(candidateRow.code, candidateRow, e)}
                         aria-label={watchlistCodes!.includes(candidateRow.code)
-                          ? `Hapus ${candidateRow.code} dari watchlist`
-                          : `Tambah ${candidateRow.code} ke watchlist`}
+                          ? `Remove ${candidateRow.code} from watchlist`
+                          : `Add ${candidateRow.code} to watchlist`}
                       >
                         <Star size={16} aria-hidden />
                       </button>
@@ -314,8 +314,8 @@ export default function CandidatesTable({
       <div className='idx-pagination'>
         <span className='idx-pagination-info'>
           {totalCount === 0
-            ? 'Tidak Ada Data'
-            : `Baris ${fromRow}-${toRow} Dari ${totalCount.toLocaleString('id-ID')}`}
+            ? 'No Data'
+            : `Rows ${fromRow}-${toRow} of ${totalCount.toLocaleString('id-ID')}`}
           {totalCountLabel != null && ` (${totalCountLabel})`}
         </span>
         <div className='idx-pagination-actions'>
@@ -324,19 +324,19 @@ export default function CandidatesTable({
             className='idx-btn'
             onClick={() => onPage(Math.max(0, offset - limit))}
             disabled={!hasPrevPage}
-            aria-label='Halaman Sebelumnya'
+            aria-label='Previous Page'
           >
             <ChevronLeft size={16} aria-hidden />
-            <span>Sebelumnya</span>
+            <span>Previous</span>
           </button>
           <button
             type='button'
             className='idx-btn'
             onClick={() => onPage(offset + limit)}
             disabled={!hasNextPage}
-            aria-label='Halaman Berikutnya'
+            aria-label='Next Page'
           >
-            <span>Selanjutnya</span>
+            <span>Next</span>
             <ChevronRight size={16} aria-hidden />
           </button>
         </div>
