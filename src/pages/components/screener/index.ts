@@ -12,4 +12,4 @@ export { default as DashboardHeader } from '@app/pages/components/screener/Dashb
 export { default as FilterPanel } from '@app/pages/components/screener/FilterPanel.tsx'
 export { default as RsiMarketView } from '@app/pages/components/screener/RsiMarketView.tsx'
 export { default as SectorStrength } from '@app/pages/components/screener/SectorStrength.tsx'
-export { default as StockDetailModal } from '@app/pages/components/screener/StockDetailModal.tsx'
+export { default as StockDetailDrawer } from '@app/pages/components/screener/StockDetailDrawer.tsx'

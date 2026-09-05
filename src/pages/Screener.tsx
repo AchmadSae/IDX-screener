@@ -362,7 +362,7 @@ export default function Screener() {
         )}
       </div>
       {detailCode && (
-        <ScreenerComps.StockDetailModal
+        <ScreenerComps.StockDetailDrawer
           detail={detailData}
           loading={detailLoading}
           error={detailError}

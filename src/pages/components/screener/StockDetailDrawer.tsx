@@ -6,8 +6,8 @@
  * Fullstack developer with a focus on security and experience in trading systems.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { BarChart2, LineChart as LineChartIcon, TrendingUp, X } from 'lucide-react'
+import React, { useMemo, useState } from 'react'
+import { BarChart2, LineChart as LineChartIcon, TrendingUp } from 'lucide-react'
 import {
   Area,
   AreaChart,
@@ -26,6 +26,7 @@ import * as Hooks from '@app/pages/hooks/index.ts'
 import * as Utils from '@app/pages/utils/index.ts'
 import { CHART_DOWN, CHART_UP } from '@app/pages/theme/colors.ts'
 import type * as Types from '@app/pages/Types.ts'
+import Drawer from '@app/pages/components/drawer/Drawer.tsx'
 import TradeAdvisor from '@app/pages/components/screener/TradeAdvisor.tsx'
 
 const foreignPeriodOptions: Types.ForeignPeriodOption[] = [
@@ -69,7 +70,7 @@ function buildRsiChartData(rsiData: Types.RsiResponse | null): {
   return { chartData, hasSector }
 }
 
-export default function StockDetailModal({
+export default function StockDetailDrawer({
   detail,
   loading,
   error,
@@ -77,8 +78,6 @@ export default function StockDetailModal({
 }: Types.StockDetailModalProps) {
   const [activeTab, setActiveTab] = useState<Types.DetailTab>('fundamental')
   const [foreignPeriodDays, setForeignPeriodDays] = useState<Types.ForeignPeriodDays>(90)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const previousActiveRef = useRef<HTMLElement | null>(null)
   const {
     data: rsiData,
     loading: rsiLoading,
@@ -115,47 +114,20 @@ export default function StockDetailModal({
 
   const rsiChartData = useMemo(() => buildRsiChartData(rsiData ?? null), [rsiData])
 
-  useEffect(() => {
-    if (!detail) {
-      return
-    }
-    previousActiveRef.current = document.activeElement as HTMLElement | null
-    closeButtonRef.current?.focus()
-    return () => {
-      previousActiveRef.current?.focus?.()
-    }
-  }, [detail])
-
-  const handleClose = useCallback(() => {
-    previousActiveRef.current?.focus?.()
-    onClose()
-  }, [onClose])
-
   return (
-    <div className='idx-modal-overlay' onClick={handleClose} role='presentation'>
-      <div
-        className='idx-modal'
-        onClick={(event) => event.stopPropagation()}
-        role='dialog'
-        aria-modal='true'
-      >
-        <div className='idx-modal-header'>
-          <h2 className='idx-modal-title idx-modal-title-with-icon'>
-            <LineChartIcon size={22} aria-hidden />
-            <span>{detail ? `${detail.code}: ${detail.name ?? ''}` : 'Detail Saham'}</span>
-          </h2>
-          <button
-            ref={closeButtonRef}
-            type='button'
-            className='idx-modal-close'
-            onClick={handleClose}
-            aria-label='Tutup Modal'
-          >
-            <X size={20} aria-hidden />
-          </button>
-        </div>
-        <div className='idx-modal-body'>
-          {loading && <div className='idx-loading'>Memuat...</div>}
+    <Drawer
+      title={
+        <>
+          <LineChartIcon size={22} aria-hidden />
+          <span>{detail ? `${detail.code}: ${detail.name ?? ''}` : 'Stock Detail'}</span>
+        </>
+      }
+      onClose={onClose}
+      width={720}
+      closeLabel='Close drawer'
+    >
+      <div className='idx-modal-body'>
+          {loading && <div className='idx-loading'>Loading...</div>}
           {error && <div className='idx-error'>{error}</div>}
           {detail && !loading && (
             <>
@@ -679,8 +651,7 @@ export default function StockDetailModal({
               )}
             </>
           )}
-        </div>
       </div>
-    </div>
+    </Drawer>
   )
 }

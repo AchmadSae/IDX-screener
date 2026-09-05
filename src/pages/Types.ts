@@ -360,3 +360,149 @@ export interface StockDetailOhlcRow {
 }
 
 export type PriceLinePoint = { date: string; close: number }
+
+/* Prediction domain */
+
+export type PredictionAssetClass = 'stock' | 'forex' | 'metal'
+export type PredictionStrategy = 'scalping' | 'swing' | 'long_term'
+export type PredictionStatus = 'open' | 'won' | 'lost' | 'expired'
+export type PredictionAiStatus = 'ok' | 'failed' | 'skipped' | 'off'
+
+export interface PredictionAiRun {
+  runId: string | null
+  status: string
+  model: string
+  promptVersion: string
+  errorMessage: string | null
+  tokens: { promptTokens: number; completionTokens: number } | null
+  estimatedCostUsd: number | null
+}
+
+export interface PredictionOutcome {
+  id: string
+  predictionId: string
+  evaluatedAt: string
+  referencePrice: number
+  returnPercent: number
+  maxFavorableExcursion: number | null
+  maxAdverseExcursion: number | null
+  hitTarget: string
+  hitStop: string
+}
+
+export interface PredictionRow {
+  id: string
+  symbol: string
+  assetClass: PredictionAssetClass
+  strategy: PredictionStrategy
+  horizonDays: number
+  entryPrice: number
+  targetPrice: number
+  stopLoss: number
+  bullishProbability: number
+  confidenceScore: number
+  ruleScore: number
+  aiScore: number | null
+  aiSummary: string | null
+  riskNotes: string[]
+  status: PredictionStatus
+  modelVersion: string
+  metadata: Record<string, unknown>
+  createdAt: string
+  outcome: PredictionOutcome | null
+  aiStatus?: PredictionAiStatus
+  aiRun?: PredictionAiRun | null
+}
+
+export interface PredictionListResponse {
+  data: PredictionRow[]
+  meta: { totalCount: number; limit: number; offset: number }
+}
+
+export interface PredictionStatsGroup {
+  count: number
+  settledCount: number
+  winRate: number | null
+  avgReturn: number | null
+  avgDrawdown: number | null
+}
+
+export interface PredictionStatsResponse {
+  data: {
+    counts: { total: number; open: number; won: number; lost: number; expired: number }
+    overall: {
+      winRate: number | null
+      avgReturn: number | null
+      avgDrawdown: number | null
+      settledCount: number
+    }
+    byStrategy: (PredictionStatsGroup & { strategy: string })[]
+    byAssetClass: (PredictionStatsGroup & { assetClass: string })[]
+    calibration: { bucket: string; count: number; winRate: number | null }[]
+  }
+}
+
+export interface InstrumentItem {
+  symbol: string
+  displayName: string
+  assetClass: PredictionAssetClass
+  currency: string | null
+  exchange: string | null
+  provider: string | null
+  latestPrice: number | null
+  latestDateInt: number | null
+  dayChangePct: number | null
+}
+
+export interface AnalysisRunRow {
+  id: string
+  predictionId: string | null
+  symbol: string
+  assetClass: PredictionAssetClass
+  strategy: PredictionStrategy
+  provider: string
+  model: string
+  promptVersion: string
+  status: string
+  inputHash: string | null
+  responseSummary: string | null
+  errorMessage: string | null
+  metadata: Record<string, unknown>
+  createdAt: string
+}
+
+export interface AnalysisResult {
+  runId: string | null
+  symbol: string
+  assetClass: PredictionAssetClass
+  strategy: PredictionStrategy
+  promptVersion: string
+  model: string
+  status: string
+  rulePrediction: {
+    entryPrice: number
+    targetPrice: number
+    stopLoss: number
+    bullishProbability: number
+    confidenceScore: number
+    ruleScore: number
+    horizonDays: number
+    riskNotes: string[]
+    metadata: Record<string, unknown>
+  }
+  aiResult: {
+    label: 'bullish' | 'neutral' | 'bearish' | null
+    bullishProbability: number | null
+    targetPrice: number | null
+    stopLoss: number | null
+    horizonDays: number | null
+    reasons: string[]
+    riskWarnings: string[]
+    confidenceScore: number | null
+    disclaimer: string | null
+  } | null
+  aiSummary: string | null
+  errorMessage: string | null
+  tokens: { promptTokens: number; completionTokens: number } | null
+  estimatedCostUsd: number | null
+}

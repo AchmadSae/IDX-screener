@@ -6,76 +6,32 @@
  * Fullstack developer with a focus on security and experience in trading systems.
  */
 
-import React, { useCallback } from 'react'
-import { Link, Route, Routes, useLocation } from 'react-router-dom'
-import { BarChart3, BrainCircuit, History, Home as HomeIcon, Info, LineChart } from 'lucide-react'
+import React from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import AppShell from '@app/pages/components/shell/AppShell.tsx'
 import Home from '@app/pages/Home.tsx'
 import About from '@app/pages/About.tsx'
 import Screener from '@app/pages/Screener.tsx'
 import Historical from '@app/pages/Historical.tsx'
 import PredictionLab from '@app/pages/PredictionLab.tsx'
+import History from '@app/pages/History.tsx'
+import Analyst from '@app/pages/Analyst.tsx'
+import Watchlist from '@app/pages/Watchlist.tsx'
 
 export default function App() {
-  const location = useLocation()
-  const isActive = useCallback((path: string) => location.pathname === path, [location.pathname])
-
   return (
-    <div className='idx-page'>
-      <header className='idx-header'>
-        <div className='idx-header-inner'>
-          <Link to='/' className='idx-logo' style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className='idx-logo-icon'>
-              <LineChart size={22} strokeWidth={2.2} />
-            </div>
-            <span className='idx-logo-text'>
-              IDX <span>Screener</span>
-            </span>
-          </Link>
-          <nav className='idx-nav'>
-            <Link to='/' className={`idx-nav-item ${isActive('/') ? 'idx-nav-item-active' : ''}`}>
-              <HomeIcon size={16} aria-hidden />
-              <span className='idx-nav-item-text'>Beranda</span>
-            </Link>
-            <Link
-              to='/screener'
-              className={`idx-nav-item ${isActive('/screener') ? 'idx-nav-item-active' : ''}`}
-            >
-              <BarChart3 size={16} aria-hidden />
-              <span className='idx-nav-item-text'>Screener</span>
-            </Link>
-            <Link
-              to='/historical'
-              className={`idx-nav-item ${isActive('/historical') ? 'idx-nav-item-active' : ''}`}
-            >
-              <History size={16} aria-hidden />
-              <span className='idx-nav-item-text'>Historical</span>
-            </Link>
-            <Link
-              to='/prediction'
-              className={`idx-nav-item ${isActive('/prediction') ? 'idx-nav-item-active' : ''}`}
-            >
-              <BrainCircuit size={16} aria-hidden />
-              <span className='idx-nav-item-text'>Prediction</span>
-            </Link>
-            <Link
-              to='/about'
-              className={`idx-nav-item ${isActive('/about') ? 'idx-nav-item-active' : ''}`}
-            >
-              <Info size={16} aria-hidden />
-              <span className='idx-nav-item-text'>Tentang</span>
-            </Link>
-          </nav>
-        </div>
-      </header>
-      <main>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/about' element={<About />} />
-          <Route path='/historical' element={<Historical />} />
-          <Route path='/prediction' element={<PredictionLab />} />
-          <Route path='/screener' element={<Screener />} />
-        </Routes>
-      </main>
-    </div>
+    <Routes>
+      <Route element={<AppShell />}>
+        <Route path='/' element={<Home />} />
+        <Route path='/about' element={<About />} />
+        <Route path='/screener' element={<Screener />} />
+        <Route path='/prediction' element={<PredictionLab />} />
+        <Route path='/history' element={<History />} />
+        <Route path='/analyst' element={<Analyst />} />
+        <Route path='/watchlist' element={<Watchlist />} />
+        <Route path='/markets' element={<Historical />} />
+        <Route path='/historical' element={<Navigate to='/markets' replace />} />
+      </Route>
+    </Routes>
   )
 }
