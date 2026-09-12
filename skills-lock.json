@@ -7,6 +7,12 @@
       "skillPath": "skills/prd/SKILL.md",
       "computedHash": "1f3e1f005fc40fda85d250ae906c8ee4f7e8e833e23adfeca6542c19609fd7cd"
     },
+    "scenario-analyzer": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "skillPath": "skills/scenario-analyzer/SKILL.md",
+      "computedHash": "b5fa8d05a2157183e1a4208534c7325a0221eef54a81890f5442c6500fb6037a"
+    },
     "trading-analysis": {
       "source": "gracefullight/stock-checker",
       "sourceType": "github",

@@ -6,6 +6,11 @@
  * Fullstack developer with a focus on security and experience in trading systems.
  */
 
+@keyframes idx-toast-in {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .idx-dashboard-header {
   display: flex;
   flex-wrap: wrap;

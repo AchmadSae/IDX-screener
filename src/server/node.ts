@@ -26,6 +26,7 @@ import * as PredictionsStatsRoute from '@app/server/routes/api/predictions/stats
 import * as InstrumentsRoute from '@app/server/routes/api/instruments.ts'
 import * as InstrumentOhlcRoute from '@app/server/routes/api/instruments/[symbol]/ohlc.ts'
 import * as AnalysesRoute from '@app/server/routes/api/analyses.ts'
+import * as IngestRoute from '@app/server/routes/api/ingest.ts'
 
 type Context = ReturnType<typeof createExpressContext>
 
@@ -98,6 +99,7 @@ async function main(): Promise<void> {
     GET: AnalysesRoute.GET,
     POST: AnalysesRoute.POST
   })
+  mountRoute(app, '/api/ingest', { POST: IngestRoute.POST })
 
   app.use((req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -132,6 +134,9 @@ async function main(): Promise<void> {
   await initDb()
 
   if (process.env['ENABLE_INGESTION_CRON'] === 'true') {
+    IngestJob.run().catch((error) => {
+      console.error('[cron] initial ingestion job failed:', error)
+    })
     setInterval(() => {
       IngestJob.run().catch((error) => {
         console.error('[cron] ingestion job failed:', error)

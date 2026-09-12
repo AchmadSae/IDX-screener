@@ -337,6 +337,8 @@ export interface StockDetail {
   momentumScore: number
   compositeScore: number
   rank: number
+  compositePercentile: number
+  rankedCount: number
   value: number | null
   volume: number | null
   ohlc: StockDetailOhlcRow[]
@@ -366,7 +368,7 @@ export type PriceLinePoint = { date: string; close: number }
 /* Prediction domain */
 
 export type PredictionAssetClass = 'stock' | 'forex' | 'metal'
-export type PredictionStrategy = 'scalping' | 'swing' | 'long_term'
+export type PredictionStrategy = 'scalping' | 'scalping_hourly' | 'scalping_minutes' | 'swing' | 'long_term'
 export type PredictionStatus = 'open' | 'won' | 'lost' | 'expired'
 export type PredictionAiStatus = 'ok' | 'failed' | 'skipped' | 'off'
 

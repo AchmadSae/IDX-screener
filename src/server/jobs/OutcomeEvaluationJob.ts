@@ -21,8 +21,13 @@ import {
 } from '@app/server/services/prediction/outcomeEvaluation.ts'
 
 const SETTLE_MIN_AGE_MS = 24 * 60 * 60 * 1000
+const INTRADAY_SETTLE_MIN_AGE_MS = 60 * 60 * 1000
 
 let inFlight: Promise<number> | null = null
+
+function isIntradayStrategy(strategy: string): boolean {
+  return strategy === 'scalping_hourly' || strategy === 'scalping_minutes'
+}
 
 async function stockBarsBetween(
   symbol: string,
@@ -106,15 +111,42 @@ export class OutcomeEvaluationJob {
   }
 
   private static async runInternal(limit: number): Promise<number> {
-    const threshold = new Date(Date.now() - SETTLE_MIN_AGE_MS)
+    const now = new Date()
+    const dailyThreshold = new Date(now.getTime() - SETTLE_MIN_AGE_MS)
+    const intradayThreshold = new Date(now.getTime() - INTRADAY_SETTLE_MIN_AGE_MS)
+
     const candidates = await Database.select()
       .from(Schemas.predictions)
-      .where(and(eq(Schemas.predictions.status, 'open'), lt(Schemas.predictions.createdAt, threshold)))
+      .where(
+        and(
+          eq(Schemas.predictions.status, 'open'),
+          lt(Schemas.predictions.createdAt, dailyThreshold)
+        )
+      )
       .orderBy(asc(Schemas.predictions.createdAt))
       .limit(Math.min(Math.max(limit, 1), 500))
 
+    const intradayCandidates = await Database.select()
+      .from(Schemas.predictions)
+      .where(
+        and(
+          eq(Schemas.predictions.status, 'open'),
+          lt(Schemas.predictions.createdAt, intradayThreshold)
+        )
+      )
+      .orderBy(asc(Schemas.predictions.createdAt))
+      .limit(Math.min(Math.max(limit, 1), 500))
+
+    const allCandidates = [...candidates]
+    for (const pred of intradayCandidates) {
+      if (!allCandidates.some((c) => c.id === pred.id)) {
+        allCandidates.push(pred)
+      }
+    }
+    allCandidates.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+
     let settled = 0
-    for (const prediction of candidates) {
+    for (const prediction of allCandidates) {
       try {
         if (await settleOne(prediction)) {
           settled++

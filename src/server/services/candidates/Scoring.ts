@@ -17,6 +17,16 @@ function hasNumber(value: number | null | undefined): value is number {
   return value != null && Number.isFinite(value)
 }
 
+const fundamentalPassDefaults = {
+  perMin: 0,
+  perMax: 25,
+  roeMin: 8,
+  derMax: 1.5,
+  momentumMin: 5,
+  minValue: 5_000_000_000,
+  minVolume: 500_000
+} as const
+
 export function setupResult(row: Types.CandidateRow, setup: Types.TradingSetup) {
   if (setup === 'fundamental') {
     const reasons: string[] = []
@@ -46,36 +56,36 @@ export function setupResult(row: Types.CandidateRow, setup: Types.TradingSetup) 
     const score = Math.round((0.4 * fundRaw + 0.3 * valRaw + 0.2 * momRaw + 0.1 * liqRaw) * 100) /
       100
 
-    // Basic pass/fail criteria checks (these thresholds are defaults; params may override)
-    if (!hasNumber(row.per) || row.per < 3) {
-      reasons.push('PER >= 3')
+    // Basic pass/fail criteria checks (these thresholds mirror the default filters).
+    if (!hasNumber(row.per) || row.per < fundamentalPassDefaults.perMin) {
+      reasons.push('PER >= 0')
     }
-    if (!hasNumber(row.per) || row.per > 18) {
-      reasons.push('PER <= 18')
+    if (!hasNumber(row.per) || row.per > fundamentalPassDefaults.perMax) {
+      reasons.push('PER <= 25')
     }
-    if (!hasNumber(row.roe) || row.roe < 15) {
-      reasons.push('ROE >= 15%')
+    if (!hasNumber(row.roe) || row.roe < fundamentalPassDefaults.roeMin) {
+      reasons.push('ROE >= 8%')
     }
-    if (!hasNumber(row.der) || row.der > 0.8) {
-      reasons.push('DER <= 0.8')
+    if (!hasNumber(row.der) || row.der > fundamentalPassDefaults.derMax) {
+      reasons.push('DER <= 1.5')
     }
     const labelMomentum = row.selectedMomentumPC ?? row.week13PC ?? row.momentumScore ?? 0
     if (!hasNumber(row.relativeStrength) && !hasNumber(labelMomentum)) {
       reasons.push('Momentum available')
     }
-    if (hasNumber(labelMomentum) && labelMomentum < 10) {
-      reasons.push('Momentum >= 10%')
+    if (hasNumber(labelMomentum) && labelMomentum < fundamentalPassDefaults.momentumMin) {
+      reasons.push('Momentum >= 5%')
     }
     // fallback to value/volume if avg fields missing
     if (!hasNumber(row.avgValue20) && !hasNumber(row.value)) {
-      reasons.push('Avg value >= 10B')
-    } else if ((row.avgValue20 ?? row.value ?? 0) < 10_000_000_000) {
-      reasons.push('Avg value >= 10B')
+      reasons.push('Avg value >= 5B')
+    } else if ((row.avgValue20 ?? row.value ?? 0) < fundamentalPassDefaults.minValue) {
+      reasons.push('Avg value >= 5B')
     }
     if (!hasNumber(row.avgVolume20) && !hasNumber(row.volume)) {
-      reasons.push('Avg volume >= 1M')
-    } else if ((row.avgVolume20 ?? row.volume ?? 0) < 1_000_000) {
-      reasons.push('Avg volume >= 1M')
+      reasons.push('Avg volume >= 500K')
+    } else if ((row.avgVolume20 ?? row.volume ?? 0) < fundamentalPassDefaults.minVolume) {
+      reasons.push('Avg volume >= 500K')
     }
     if (row.hasNotation) {
       reasons.push('Has notation')
@@ -93,7 +103,7 @@ export function setupResult(row: Types.CandidateRow, setup: Types.TradingSetup) 
       label = 'A+ Quality Compounder'
     } else if ((row.roe ?? 0) > 15 && (row.per ?? 999999) < 15 && labelMomentum > 10) {
       label = 'A Value Growth'
-    } else if ((row.roe ?? 0) > 12) {
+    } else if ((row.roe ?? 0) >= fundamentalPassDefaults.roeMin) {
       label = 'B Watchlist'
     } else {
       label = 'C Avoid'

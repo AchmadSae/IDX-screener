@@ -7,24 +7,26 @@
  */
 
 import React from 'react'
-import { Flame, TrendingUp, Mountain } from 'lucide-react'
+import { Flame, TrendingUp, Mountain, Clock, Timer } from 'lucide-react'
 
 export type StrategyOption = {
-  value: 'scalping' | 'swing' | 'long_term'
+  value: 'scalping' | 'scalping_hourly' | 'scalping_minutes' | 'swing' | 'long_term'
   label: string
   horizon: string
   icon: typeof Flame
 }
 
 export const STRATEGY_OPTIONS: StrategyOption[] = [
+  { value: 'scalping_minutes', label: 'Scalp 15M', horizon: '15 minutes', icon: Timer },
+  { value: 'scalping_hourly', label: 'Scalp 1H', horizon: '1 hour', icon: Clock },
   { value: 'scalping', label: 'Scalping', horizon: '1 day', icon: Flame },
   { value: 'swing', label: 'Swing', horizon: '14 days', icon: TrendingUp },
   { value: 'long_term', label: 'Long Term', horizon: '90 days', icon: Mountain }
 ]
 
 export type StrategySelectorProps = {
-  value: 'scalping' | 'swing' | 'long_term'
-  onChange: (value: 'scalping' | 'swing' | 'long_term') => void
+  value: 'scalping' | 'scalping_hourly' | 'scalping_minutes' | 'swing' | 'long_term'
+  onChange: (value: 'scalping' | 'scalping_hourly' | 'scalping_minutes' | 'swing' | 'long_term') => void
 }
 
 export default function StrategySelector({ value, onChange }: StrategySelectorProps) {

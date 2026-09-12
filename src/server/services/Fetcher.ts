@@ -15,7 +15,12 @@ export class Fetcher {
     await Services.Screener.run(this.client)
     for (let offset = -5; offset <= 2; offset++) {
       const dateInt = Services.CronDate.getDateIntForDayOffset(offset)
-      await Services.Summary.run(this.client, dateInt)
+      console.info(`[fetcher] ingesting summary for ${dateInt}...`)
+      try {
+        await Services.Summary.run(this.client, dateInt)
+      } catch (error) {
+        console.error(`[fetcher] summary failed for ${dateInt}:`, error)
+      }
     }
   }
 }

@@ -67,7 +67,19 @@ export type MarketDataBundle = {
   screenerRows: ScreenerProjectedRow[]
 }
 
+const CACHE_TTL_MS = 30 * 60 * 1000
+const marketDataCache = new Map<number, { data: MarketDataBundle; timestamp: number }>()
+
+export function clearMarketDataCache(): void {
+  marketDataCache.clear()
+}
+
 export async function loadMarketData(dateInt: number): Promise<MarketDataBundle> {
+  const cached = marketDataCache.get(dateInt)
+  if (cached != null && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data
+  }
+
   let summaryDate = dateInt
   let summaryRows = await Database.select({
     stockCode: Schemas.summary.stockCode,
@@ -183,7 +195,7 @@ export async function loadMarketData(dateInt: number): Promise<MarketDataBundle>
     umaDate: Schemas.screener.umaDate
   }).from(Schemas.screener)
 
-  return {
+  const result: MarketDataBundle = {
     summaryDate,
     codeToLiquidity,
     codeToChangePct,
@@ -193,4 +205,8 @@ export async function loadMarketData(dateInt: number): Promise<MarketDataBundle>
     codeToReturnByWeek,
     screenerRows
   }
+
+  marketDataCache.set(dateInt, { data: result, timestamp: Date.now() })
+
+  return result
 }

@@ -273,6 +273,8 @@ export interface StockDetail {
   momentumScore: number
   compositeScore: number
   rank: number
+  compositePercentile: number
+  rankedCount: number
   value: number | null
   volume: number | null
   ohlc: StockDetailOhlcRow[]

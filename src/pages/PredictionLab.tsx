@@ -170,7 +170,10 @@ export default function PredictionLab() {
                     <StatusBadge status={result.status} />
                   </div>
                   <div className='idx-prediction-result-strategy'>
-                    {result.strategy.replace('_', ' ')} · {result.horizonDays} day horizon
+                    {result.strategy.replace('_', ' ')} ·{' '}
+                    {(result.metadata as Record<string, unknown>)?.horizonMinutes != null
+                      ? `${(result.metadata as Record<string, unknown>).horizonMinutes} minute horizon`
+                      : `${result.horizonDays} day horizon`}
                   </div>
                   <div className='idx-prediction-result-model'>
                     {result.modelVersion}

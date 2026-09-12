@@ -13,53 +13,50 @@ import * as Hooks from '@app/pages/hooks/index.ts'
 import * as Utils from '@app/pages/utils/index.ts'
 import type * as Types from '@app/pages/Types.ts'
 
-const defaultParams: Types.CandidatesParams = {
+const commonDefaultFilters: Pick<
+  Types.CandidatesParams,
+  'perMin' | 'perMax' | 'roeMin' | 'derMax' | 'momentumMin' | 'minValue' | 'minVolume'
+> = {
+  perMin: 0,
+  perMax: 25,
+  roeMin: 8,
+  derMax: 1.5,
+  momentumMin: 5,
+  minValue: 5_000_000_000,
+  minVolume: 500_000
+}
+
+const defaultSetupParams: Omit<Types.CandidatesParams, 'setup' | 'momentumWeek'> = {
   limit: 10,
   offset: 0,
-  setup: 'fundamental',
   defaultFilter: true,
   excludeNotation: true,
   excludeCorpAction: true,
   excludeUma: true,
-  perMin: 3,
-  perMax: 18,
-  roeMin: 15,
-  derMax: 0.8,
-  momentumWeek: 13,
-  momentumMin: 10,
-  minValue: 10_000_000_000,
-  minVolume: 1_000_000,
+  ...commonDefaultFilters,
   exchange: 'IDX',
-  requireNewsSentiment: false,
   withSectorRank: true
+}
+
+const defaultParams: Types.CandidatesParams = {
+  ...defaultSetupParams,
+  setup: 'fundamental',
+  momentumWeek: 13,
+  requireNewsSentiment: false
 }
 
 const reboundParams: Types.CandidatesParams = {
-  limit: 10,
-  offset: 0,
+  ...defaultSetupParams,
   setup: 'rebound',
   momentumWeek: 1,
-  momentumMin: 0,
-  excludeNotation: true,
-  excludeCorpAction: true,
-  excludeUma: true,
-  exchange: 'IDX',
-  requireNewsSentiment: true,
-  withSectorRank: true
+  requireNewsSentiment: true
 }
 
 const swingParams: Types.CandidatesParams = {
-  limit: 10,
-  offset: 0,
+  ...defaultSetupParams,
   setup: 'swing',
   momentumWeek: 13,
-  momentumMin: 5,
-  excludeNotation: true,
-  excludeCorpAction: true,
-  excludeUma: true,
-  exchange: 'IDX',
-  requireNewsSentiment: true,
-  withSectorRank: true
+  requireNewsSentiment: true
 }
 
 const paramsBySetup: Record<Types.TradingSetup, Types.CandidatesParams> = {
@@ -204,6 +201,39 @@ export default function Screener() {
     setSearchQuery(query)
   }, [])
 
+  const [ingesting, setIngesting] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (toastTimerRef.current != null) {
+      clearTimeout(toastTimerRef.current)
+      toastTimerRef.current = null
+    }
+    if (toast != null) {
+      toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+    }
+    return () => {
+      if (toastTimerRef.current != null) {
+        clearTimeout(toastTimerRef.current)
+      }
+    }
+  }, [toast])
+  const handleRefresh = useCallback(async () => {
+    setIngesting(true)
+    try {
+      const res = await Hooks.fetchApi<{ ok: boolean; summaryDate: number }>('/api/ingest', {}, { method: 'POST' })
+      if (res.ok) {
+        setToast(`Data updated to ${Utils.Format.formatDateInt(res.summaryDate)}`)
+      } else {
+        setToast('Ingestion failed')
+      }
+    } catch {
+      setToast('Ingestion failed')
+    }
+    refetchCandidates()
+    setIngesting(false)
+  }, [refetchCandidates])
+
   const dataDate = candidatesResponse?.date ?? 0
   const rawData = candidatesResponse?.data ?? []
   const totalCount = candidatesResponse?.totalCount ?? 0
@@ -218,11 +248,23 @@ export default function Screener() {
 
   return (
     <div>
+      {toast != null && (
+        <div className='idx-toast' style={{
+          position: 'fixed', top: 16, right: 16, zIndex: 9999,
+          padding: '12px 20px', borderRadius: 8,
+          background: toast.includes('failed') ? '#ef4444' : '#22c55e',
+          color: '#fff', fontWeight: 600, fontSize: 14,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          animation: 'idx-toast-in 0.3s ease'
+        }}>
+          {toast}
+        </div>
+      )}
       <ScreenerComps.DashboardHeader
         totalCount={totalCount}
         date={dataDate}
-        onRefresh={refetchCandidates}
-        loading={candidatesLoading}
+        onRefresh={handleRefresh}
+        loading={candidatesLoading || ingesting}
       />
       <div className='idx-tabs idx-mb-24'>
           <button

@@ -10,6 +10,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import * as Hooks from '@app/pages/hooks/index.ts'
 import type * as Types from '@app/pages/Types.ts'
 
+const CACHE_TTL_MS = 30 * 60 * 1000
+const candidatesCache = new Map<string, { data: Types.CandidatesResponse; timestamp: number }>()
+
+function cacheKeyFromParams(params: Types.CandidatesParams): string {
+  return JSON.stringify(params)
+}
+
 function buildQueryParams(
   params: Types.CandidatesParams
 ): Record<string, string | number | boolean> {
@@ -129,7 +136,16 @@ export function useCandidates(params: Types.CandidatesParams) {
   const [error, setError] = useState<string | null>(null)
   const requestIdRef = useRef(0)
   const fetchCandidates = useCallback(
-    (signal?: AbortSignal) => {
+    (signal?: AbortSignal, skipCache = false) => {
+      const key = cacheKeyFromParams(params)
+      const cached = candidatesCache.get(key)
+      if (!skipCache && cached != null && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+        setResponse(cached.data)
+        setLoading(false)
+        setError(null)
+        return
+      }
+
       const myId = requestIdRef.current + 1
       requestIdRef.current = myId
       setLoading(true)
@@ -140,6 +156,7 @@ export function useCandidates(params: Types.CandidatesParams) {
         .then((data) => {
           if (requestIdRef.current === myId) {
             setResponse(data)
+            candidatesCache.set(key, { data, timestamp: Date.now() })
           }
         })
         .catch((fetchError: unknown) => {
@@ -207,6 +224,6 @@ export function useCandidates(params: Types.CandidatesParams) {
     return () => ctrl.abort()
   }, [fetchCandidates])
 
-  const refetch = useCallback(() => fetchCandidates(), [fetchCandidates])
+  const refetch = useCallback(() => fetchCandidates(undefined, true), [fetchCandidates])
   return { response, loading, error, refetch }
 }

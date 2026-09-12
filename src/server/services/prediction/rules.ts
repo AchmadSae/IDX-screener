@@ -13,7 +13,7 @@
 
 import { round2, clamp } from '@app/server/services/prediction/numbers.ts'
 
-export type PredictionStrategy = 'scalping' | 'swing' | 'long_term'
+export type PredictionStrategy = 'scalping' | 'scalping_hourly' | 'scalping_minutes' | 'swing' | 'long_term'
 export type PredictionAssetClass = 'stock' | 'forex' | 'metal'
 
 export type FundamentalInput = {
@@ -58,8 +58,21 @@ export type RuleOutput = {
   metadata: Record<string, unknown>
 }
 
+export type IntradayTimeframe = {
+  horizonMinutes: number
+  resolution: '60' | '15' | '5'
+  barCount: number
+}
+
+export const INTRADAY_TIMEFRAME: Record<string, IntradayTimeframe> = {
+  scalping_hourly: { horizonMinutes: 60, resolution: '60', barCount: 6 },
+  scalping_minutes: { horizonMinutes: 15, resolution: '15', barCount: 32 }
+}
+
 const HORIZON_BY_STRATEGY: Record<PredictionStrategy, number> = {
   scalping: 1,
+  scalping_hourly: 1,
+  scalping_minutes: 1,
   swing: 14,
   long_term: 90
 }
@@ -67,6 +80,8 @@ const HORIZON_BY_STRATEGY: Record<PredictionStrategy, number> = {
 /** Base target moves (%), the v1 defaults that stay as floors. */
 const BASE_MOVE: Record<PredictionStrategy, number> = {
   scalping: 1.2,
+  scalping_hourly: 0.6,
+  scalping_minutes: 0.3,
   swing: 4.5,
   long_term: 12
 }
@@ -74,6 +89,8 @@ const BASE_MOVE: Record<PredictionStrategy, number> = {
 /** Base stop distances (%), the v1 defaults that stay as floors. */
 const BASE_STOP: Record<PredictionStrategy, number> = {
   scalping: 0.6,
+  scalping_hourly: 0.3,
+  scalping_minutes: 0.15,
   swing: 2.2,
   long_term: 5.5
 }
@@ -81,6 +98,8 @@ const BASE_STOP: Record<PredictionStrategy, number> = {
 /** ATR multipliers for targets: target = max(base, atrPct * mult). */
 const ATR_MULT: Record<PredictionStrategy, number> = {
   scalping: 0.6,
+  scalping_hourly: 0.3,
+  scalping_minutes: 0.2,
   swing: 2.0,
   long_term: 7.0
 }
@@ -88,6 +107,8 @@ const ATR_MULT: Record<PredictionStrategy, number> = {
 /** ATR multipliers for stops: stop = max(base, atrPct * mult). */
 const STOP_MULT: Record<PredictionStrategy, number> = {
   scalping: 0.5,
+  scalping_hourly: 0.25,
+  scalping_minutes: 0.12,
   swing: 1.0,
   long_term: 2.5
 }
@@ -162,32 +183,54 @@ function stockDeltas(
 
 /**
  * Scores forex/metals from technical inputs only (no fundamentals).
+ * Intraday strategies use tighter thresholds for rapid signals.
  */
-function forexDeltas(indicators: IndicatorInput | null, riskNotes: string[]): number[] {
+function forexDeltas(
+  indicators: IndicatorInput | null,
+  strategy: PredictionStrategy,
+  riskNotes: string[]
+): number[] {
   const deltas: number[] = []
+  const isIntraday = strategy === 'scalping_hourly' || strategy === 'scalping_minutes'
   if (indicators != null && indicators.ema20 != null && indicators.ema50 != null) {
     if (indicators.ema20 > indicators.ema50) {
-      deltas.push(10)
+      deltas.push(isIntraday ? 12 : 10)
     } else if (indicators.ema20 < indicators.ema50) {
-      deltas.push(-10)
+      deltas.push(isIntraday ? -12 : -10)
       riskNotes.push('EMA20 below EMA50 (short-term downtrend)')
     }
   }
   if (indicators?.rsi14 != null) {
-    if (indicators.rsi14 >= 40 && indicators.rsi14 <= 65) {
-      deltas.push(4)
-    } else if (indicators.rsi14 > 75) {
-      deltas.push(-4)
-      riskNotes.push('RSI overbought')
+    if (isIntraday) {
+      if (indicators.rsi14 >= 45 && indicators.rsi14 <= 60) {
+        deltas.push(6)
+      } else if (indicators.rsi14 > 70) {
+        deltas.push(-6)
+        riskNotes.push('RSI overbought (intraday)')
+      } else if (indicators.rsi14 < 35) {
+        deltas.push(-4)
+        riskNotes.push('RSI oversold (intraday)')
+      }
+    } else {
+      if (indicators.rsi14 >= 40 && indicators.rsi14 <= 65) {
+        deltas.push(4)
+      } else if (indicators.rsi14 > 75) {
+        deltas.push(-4)
+        riskNotes.push('RSI overbought')
+      }
     }
   }
   if (indicators?.return20Pct != null) {
     if (indicators.return20Pct > 0) {
-      deltas.push(6)
+      deltas.push(isIntraday ? 8 : 6)
     } else if (indicators.return20Pct < 0) {
-      deltas.push(-6)
+      deltas.push(isIntraday ? -8 : -6)
       riskNotes.push('20-bar return negative')
     }
+  }
+  if (isIntraday && indicators?.atrPct != null && indicators.atrPct < 0.1) {
+    riskNotes.push('Very low volatility — intraday scalping may underperform')
+    deltas.push(-3)
   }
   if (
     indicators == null ||
@@ -207,7 +250,7 @@ export function computeRulePrediction(input: RuleInput): RuleOutput {
   const deltas =
     assetClass === 'stock'
       ? stockDeltas(strategy, input.fundamentals, input.indicators, riskNotes)
-      : forexDeltas(input.indicators, riskNotes)
+      : forexDeltas(input.indicators, strategy, riskNotes)
 
   const score = clamp(50 + deltas.reduce((sum, value) => sum + value, 0), 5, 95)
   const bullishProbability = round2(score)
@@ -228,11 +271,14 @@ export function computeRulePrediction(input: RuleInput): RuleOutput {
   }
 
   let confidenceScore = 45
+  const isIntraday = strategy === 'scalping_hourly' || strategy === 'scalping_minutes'
   if (assetClass === 'stock') {
     confidenceScore =
       input.fundamentals != null && input.indicators != null && input.indicators.barCount >= 60
         ? 68
         : 45
+  } else if (isIntraday) {
+    confidenceScore = input.indicators != null && input.indicators.barCount >= 20 ? 52 : 38
   } else if (input.indicators != null && input.indicators.barCount >= 60) {
     confidenceScore = 55
   } else {
@@ -253,6 +299,7 @@ export function computeRulePrediction(input: RuleInput): RuleOutput {
       symbol,
       assetClass,
       strategy,
+      ...(isIntraday ? { horizonMinutes: INTRADAY_TIMEFRAME[strategy]?.horizonMinutes ?? 60 } : {}),
       inputs: {
         rsi14: input.indicators?.rsi14 ?? null,
         ema20: input.indicators?.ema20 ?? null,

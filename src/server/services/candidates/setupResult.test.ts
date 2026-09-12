@@ -19,7 +19,7 @@ describe('setupResult — fundamental', () => {
     expect(result.score).toBeCloseTo(67, 10)
   })
 
-  it('treats PER 3.0 and DER 0.8 as inclusive boundaries', () => {
+  it('treats PER 0 and DER 1.5 as inclusive boundaries', () => {
     const result = setupResult(fundamentalBorderlineRow, 'fundamental')
     expect(result.pass).toBe(true)
     expect(result.reasons).toEqual([])
@@ -30,12 +30,12 @@ describe('setupResult — fundamental', () => {
     const result = setupResult(fundamentalFailRow, 'fundamental')
     expect(result.pass).toBe(false)
     expect(result.label).toBe('C Avoid')
-    expect(result.reasons).toContain('PER <= 18')
-    expect(result.reasons).toContain('ROE >= 15%')
-    expect(result.reasons).toContain('DER <= 0.8')
-    expect(result.reasons).toContain('Momentum >= 10%')
-    expect(result.reasons).toContain('Avg value >= 10B')
-    expect(result.reasons).toContain('Avg volume >= 1M')
+    expect(result.reasons).toContain('PER <= 25')
+    expect(result.reasons).toContain('ROE >= 8%')
+    expect(result.reasons).toContain('DER <= 1.5')
+    expect(result.reasons).toContain('Momentum >= 5%')
+    expect(result.reasons).toContain('Avg value >= 5B')
+    expect(result.reasons).toContain('Avg volume >= 500K')
     expect(result.reasons).toContain('Has notation')
     expect(result.reasons).toContain('Has UMA')
     expect(result.reasons).toContain('Has corporate action')

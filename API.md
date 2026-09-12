@@ -44,7 +44,7 @@ GET /api/candidates
 - Query params:
   - `date` — (optional) summary snapshot date (yyyymmdd). Default: today (falls back to the latest available).
   - `setup` — `fundamental` (default) | `rebound` | `swing`. Selects the setup preset scoring.
-  - `defaultFilter` — (optional) `true` applies tuned per-setup defaults (fundamental: perMin 3, perMax 18, roeMin 15, derMax 0.8, momentumWeek 13, momentumMin 10, minValue 10B, minVolume 1M, exclusions on; else: perMax 25, roeMin 0, derMax 2, momentumMin 0, momentumWeek 26).
+  - `defaultFilter` — (optional) `true` applies tuned defaults across setups: perMin 0, perMax 25, roeMin 8, derMax 1.5, momentumMin 5, minValue 5B, minVolume 500K, exclusions on. Momentum week defaults by setup: fundamental 13, rebound 1, swing 13.
   - `perMin`, `perMax`, `roeMin`, `derMax`, `pbvMax`, `minMarketCapital`, `netMarginMin`, `minValue`, `minVolume`, `momentumWeek` (1|4|13|26), `momentumMin`, `relativeStrengthMin` — numeric filters.
   - `excludeNotation`, `excludeCorpAction`, `excludeUma`, `smartMoneyOnly`, `requireBullishTrend`, `requireEarlyReversal`, `includeRejected` — booleans (`1`/`true`).
   - `vw`, `qw`, `mw` — composite weights.

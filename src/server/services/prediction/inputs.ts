@@ -15,13 +15,15 @@ import Database from '@app/server/Database.ts'
 import * as Schemas from '@app/server/schemas/index.ts'
 import { ApiError } from '@app/server/http/errors.ts'
 import { InstrumentService } from '@app/server/services/InstrumentService.ts'
+import { ZpiTradingViewClient } from '@app/server/services/ZpiTradingViewClient.ts'
 import { atr14, ema, realizedVol20, returnOverBars, rsi14 } from '@app/server/services/prediction/indicators.ts'
-import type {
-  FundamentalInput,
-  IndicatorInput,
-  PredictionAssetClass,
-  PredictionStrategy,
-  RuleInput
+import {
+  INTRADAY_TIMEFRAME,
+  type FundamentalInput,
+  type IndicatorInput,
+  type PredictionAssetClass,
+  type PredictionStrategy,
+  type RuleInput
 } from '@app/server/services/prediction/rules.ts'
 
 /** Enough bars for EMA200 (needs >= 200) plus a margin. */
@@ -123,13 +125,50 @@ async function stockBars(symbol: string): Promise<
     )
 }
 
+async function intradayBarsFromTradingView(
+  symbol: string,
+  strategy: PredictionStrategy
+): Promise<{ high: number | null; low: number | null; close: number }[]> {
+  const tf = INTRADAY_TIMEFRAME[strategy]
+  if (tf == null) {
+    return []
+  }
+  const tv = new ZpiTradingViewClient()
+  if (!tv.isConfigured()) {
+    return []
+  }
+  try {
+    const chart = await tv.fetchChart({
+      symbol,
+      resolution: tf.resolution,
+      count: tf.barCount
+    })
+    return (chart.candles ?? []).map((candle) => ({
+      high: candle.high,
+      low: candle.low,
+      close: candle.close
+    }))
+  } catch (error) {
+    console.warn(`[inputs] TradingView intraday fetch failed for ${symbol}:`, error)
+    return []
+  }
+}
+
 export async function assembleRuleInput(
   symbol: string,
   assetClass: PredictionAssetClass,
   strategy: PredictionStrategy,
   currentPrice?: number
 ): Promise<AssembledPredictionInput> {
+  const isIntraday = strategy === 'scalping_hourly' || strategy === 'scalping_minutes'
+
   if (assetClass === 'stock') {
+    if (isIntraday) {
+      throw ApiError.badRequest(
+        'INVALID_STRATEGY',
+        `strategy "${strategy}" is only supported for forex and metal instruments`
+      )
+    }
     const snapshot = await latestStockSnapshot(symbol)
     const entryPrice = currentPrice ?? snapshot.entryPrice
     if (entryPrice == null || !Number.isFinite(entryPrice) || entryPrice <= 0) {
@@ -150,6 +189,36 @@ export async function assembleRuleInput(
         indicators
       },
       closes: bars.map((bar) => bar.close).slice(-90)
+    }
+  }
+
+  if (isIntraday) {
+    const bars = await intradayBarsFromTradingView(symbol, strategy)
+    if (bars.length === 0) {
+      throw ApiError.conflict(
+        'INTRADAY_DATA_UNAVAILABLE',
+        `No intraday data available for ${symbol}. Ensure TradingView API is configured.`
+      )
+    }
+    const latestClose = bars[bars.length - 1]!.close
+    const entryPrice = currentPrice ?? latestClose
+    if (entryPrice == null || !Number.isFinite(entryPrice) || entryPrice <= 0) {
+      throw ApiError.conflict(
+        'PRICE_UNAVAILABLE',
+        `No current price for ${symbol}. Supply a current price.`
+      )
+    }
+    const indicators = bars.length >= 3 ? indicatorsFromBars(bars, entryPrice) : null
+    return {
+      ruleInput: {
+        symbol,
+        assetClass,
+        strategy,
+        entryPrice,
+        fundamentals: null,
+        indicators
+      },
+      closes: bars.map((bar) => bar.close)
     }
   }
 

@@ -69,12 +69,18 @@ export function parseStrategy(raw: string | undefined): PredictionStrategy {
   if (raw === undefined || raw === '') {
     return 'swing'
   }
-  if (raw === 'scalping' || raw === 'swing' || raw === 'long_term') {
+  if (
+    raw === 'scalping' ||
+    raw === 'scalping_hourly' ||
+    raw === 'scalping_minutes' ||
+    raw === 'swing' ||
+    raw === 'long_term'
+  ) {
     return raw
   }
   throw ApiError.badRequest(
     'INVALID_PARAM_STRATEGY',
-    `strategy must be one of: scalping, swing, long_term (got "${raw}")`
+    `strategy must be one of: scalping, scalping_hourly, scalping_minutes, swing, long_term (got "${raw}")`
   )
 }
 

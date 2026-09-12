@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
+    "jsx": "react",
     "baseUrl": ".",
+    "allowImportingTsExtensions": true,
+    "ignoreDeprecations": "5.0",
+    "noEmit": true,
     "paths": {
       "@app/*": ["./src/*"],
       "@data/*": ["./data/*"]

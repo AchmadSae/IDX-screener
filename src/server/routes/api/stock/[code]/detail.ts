@@ -67,6 +67,8 @@ export async function GET(ctx: Context) {
     roa: Schemas.screener.roa,
     roe: Schemas.screener.roe,
     der: Schemas.screener.der,
+    week4PC: Schemas.screener.week4PC,
+    week13PC: Schemas.screener.week13PC,
     week26PC: Schemas.screener.week26PC,
     week52PC: Schemas.screener.week52PC
   }).from(Schemas.screener)
@@ -79,6 +81,8 @@ export async function GET(ctx: Context) {
     roa: row.roa,
     roe: row.roe,
     der: row.der,
+    week4PC: row.week4PC,
+    week13PC: row.week13PC,
     week26PC: row.week26PC,
     week52PC: row.week52PC
   }))
@@ -137,6 +141,10 @@ export async function GET(ctx: Context) {
     momentumScore: rankedRow?.momentumScore ?? 0,
     compositeScore: rankedRow?.compositeScore ?? 0,
     rank: rankedRow?.rank ?? 0,
+    compositePercentile: rankedRow != null
+      ? Utils.compositePercentile(rankedRow.rank - 1, rankedRows.length)
+      : 0,
+    rankedCount: rankedRows.length,
     value: summaryRow?.value ?? null,
     volume: summaryRow?.volume ?? null,
     ohlc: ohlcRows.map((row) => ({

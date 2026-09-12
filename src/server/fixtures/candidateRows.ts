@@ -7,7 +7,7 @@
  *
  * Candidate row fixtures for the setupResult scoring tests. Boundary values
  * are chosen to pin the exact pass/fail thresholds of the extracted scoring
- * logic (PER 3.0 and DER 0.8 are inclusive, swing passes at exactly 75%).
+ * logic (PER 0 and DER 1.5 are inclusive, swing passes at exactly 75%).
  */
 
 import type * as Types from '@app/server/Types.ts'
@@ -76,21 +76,21 @@ export function makeCandidateRow(
 /** Meets every fundamental gate and earns the top label. */
 export const fundamentalPassRow = makeCandidateRow({ roe: 20, der: 0.4 })
 
-/** Exactly on the fundamental boundaries: PER 3.0 and DER 0.8 are inclusive. */
+/** Exactly on the fundamental boundaries: PER 0 and DER 1.5 are inclusive. */
 export const fundamentalBorderlineRow = makeCandidateRow({
   code: 'EDGE',
-  per: 3.0,
-  roe: 15,
-  der: 0.8,
-  selectedMomentumPC: 10,
-  avgValue20: 10_000_000_000,
-  avgVolume20: 1_000_000
+  per: 0,
+  roe: 8,
+  der: 1.5,
+  selectedMomentumPC: 5,
+  avgValue20: 5_000_000_000,
+  avgVolume20: 500_000
 })
 
 /** Fails every fundamental gate and carries exclusion flags. */
 export const fundamentalFailRow = makeCandidateRow({
   code: 'FAIL',
-  per: 25,
+  per: 30,
   roe: 5,
   der: 3,
   selectedMomentumPC: 2,

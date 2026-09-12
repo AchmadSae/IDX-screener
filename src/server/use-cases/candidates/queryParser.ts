@@ -12,6 +12,22 @@
 import Utils from '@app/server/Utils.ts'
 import type * as Types from '@app/server/Types.ts'
 
+const defaultCandidateFilters = {
+  perMin: 0,
+  perMax: 25,
+  roeMin: 8,
+  derMax: 1.5,
+  momentumMin: 5,
+  minValue: 5_000_000_000,
+  minVolume: 500_000
+} as const
+
+const defaultMomentumWeekBySetup: Record<Types.TradingSetup, 1 | 4 | 13 | 26> = {
+  fundamental: 13,
+  rebound: 1,
+  swing: 13
+}
+
 export function getTradingSetup(raw: string | undefined): Types.TradingSetup {
   return raw === 'rebound' || raw === 'swing' ? raw : 'fundamental'
 }
@@ -100,52 +116,29 @@ export function parseCandidateQuery(query: QueryGetter): CandidateQuery {
     if (!Utils.queryParamSent(excludeUmaRaw)) {
       excludeUma = true
     }
-    // Default values tuned per setup
-    if (setup === 'fundamental') {
-      if (!Utils.queryParamSent(perMinRaw)) {
-        perMin = 3
-      }
-      if (!Utils.queryParamSent(perMaxRaw)) {
-        perMax = 18
-      }
-      if (!Utils.queryParamSent(roeMinRaw)) {
-        roeMin = 15
-      }
-      if (!Utils.queryParamSent(derMaxRaw)) {
-        derMax = 0.8
-      }
-      if (!Utils.queryParamSent(momentumWeekRaw)) {
-        momentumWeek = 13
-      }
-      if (!Utils.queryParamSent(momentumMinRaw)) {
-        momentumMin = 10
-      }
-      if (!Utils.queryParamSent(minValueRaw)) {
-        minValue = 10_000_000_000
-      }
-      if (!Utils.queryParamSent(minVolumeRaw)) {
-        minVolume = 1_000_000
-      }
-      // default exclude flags for fundamental
-      if (!Utils.queryParamSent(excludeNotationRaw)) {
-        excludeNotation = true
-      }
-      if (!Utils.queryParamSent(excludeCorpActionRaw)) {
-        excludeCorpAction = true
-      }
-      if (!Utils.queryParamSent(excludeUmaRaw)) {
-        excludeUma = true
-      }
-    } else {
-      if (!Utils.queryParamSent(perMaxRaw)) {
-        perMax = 25
-      }
-      if (!Utils.queryParamSent(roeMinRaw)) {
-        roeMin = 0
-      }
-      if (!Utils.queryParamSent(derMaxRaw)) {
-        derMax = 2
-      }
+    if (!Utils.queryParamSent(perMinRaw)) {
+      perMin = defaultCandidateFilters.perMin
+    }
+    if (!Utils.queryParamSent(perMaxRaw)) {
+      perMax = defaultCandidateFilters.perMax
+    }
+    if (!Utils.queryParamSent(roeMinRaw)) {
+      roeMin = defaultCandidateFilters.roeMin
+    }
+    if (!Utils.queryParamSent(derMaxRaw)) {
+      derMax = defaultCandidateFilters.derMax
+    }
+    if (!Utils.queryParamSent(momentumWeekRaw)) {
+      momentumWeek = defaultMomentumWeekBySetup[setup]
+    }
+    if (!Utils.queryParamSent(momentumMinRaw)) {
+      momentumMin = defaultCandidateFilters.momentumMin
+    }
+    if (!Utils.queryParamSent(minValueRaw)) {
+      minValue = defaultCandidateFilters.minValue
+    }
+    if (!Utils.queryParamSent(minVolumeRaw)) {
+      minVolume = defaultCandidateFilters.minVolume
     }
     if (!Utils.queryParamSent(pbvMaxRaw)) {
       pbvMax = undefined
@@ -155,13 +148,6 @@ export function parseCandidateQuery(query: QueryGetter): CandidateQuery {
     }
     if (!Utils.queryParamSent(netMarginMinRaw)) {
       netMarginMin = undefined
-    }
-    if (!Utils.queryParamSent(momentumMinRaw)) {
-      // if not set above for fundamental, fall back to 0
-      momentumMin = momentumMin ?? 0
-    }
-    if (!Utils.queryParamSent(momentumWeekRaw)) {
-      momentumWeek = momentumWeek ?? 26
     }
   }
   const { limit, offset } = Utils.parseLimitOffset(
