@@ -10,7 +10,7 @@
     "dev:ui": "vite --host 127.0.0.1 --port 50260",
     "build": "npm run build:ui && npm run build:api",
     "build:ui": "vite build --mode production",
-    "build:api": "esbuild api/_index.ts --bundle --platform=node --target=node20 --format=esm --outfile=api/index.js --tsconfig=tsconfig.json",
+    "build:api": "esbuild src/api/vercel-handler.ts --bundle --platform=node --target=node20 --format=esm --outfile=api/index.js --external:express --external:crypto --external:node:* --external:@neabyte/deserve --external:@neabyte/deserve-mcp --tsconfig=tsconfig.json",
     "build:server": "tsc -p tsconfig.server.json --noEmit",
     "start": "tsx -r tsconfig-paths/register src/server/node.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",

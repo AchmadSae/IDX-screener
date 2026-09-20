@@ -11,7 +11,7 @@ let dbReady: Promise<void> | null = null
 
 async function getApp(): Promise<any> {
   if (app === null) {
-    const { createApp } = await import('../src/server/app.ts')
+    const { createApp } = await import('../server/app.ts')
     app = createApp()
   }
   return app
@@ -19,7 +19,7 @@ async function getApp(): Promise<any> {
 
 function ensureDb(): Promise<void> {
   if (dbReady === null) {
-    dbReady = import('../src/server/Database.ts')
+    dbReady = import('../server/Database.ts')
       .then((m) => m.initDb())
       .catch((error) => {
         console.error('[api] initDb failed:', error)
