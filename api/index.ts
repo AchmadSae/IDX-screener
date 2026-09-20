@@ -16,6 +16,7 @@ let dbReady: Promise<void> | null = null
 function ensureDb(): Promise<void> {
   if (dbReady === null) {
     dbReady = initDb().catch((error) => {
+      console.error('[api] initDb failed:', error)
       dbReady = null
       throw error
     })
@@ -27,14 +28,22 @@ export default async function handler(
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<void> {
-  await ensureDb()
+  try {
+    await ensureDb()
+  } catch (error) {
+    console.error('[api] DB connection failed:', error)
+    if (!res.headersSent) {
+      res.writeHead(503, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: { code: 'SERVICE_UNAVAILABLE', message: 'Database connection failed' } }))
+    }
+    return
+  }
+
   return new Promise<void>((resolve, reject) => {
     res.on('finish', resolve)
     res.on('error', reject)
     app(req, res, (error?: unknown) => {
-      if (error != null) {
-        reject(error)
-      }
+      if (error != null) reject(error)
     })
   })
 }

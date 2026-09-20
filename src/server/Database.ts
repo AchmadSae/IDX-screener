@@ -30,7 +30,7 @@ function parseDatabaseUrl(url: string): postgres.Options<Record<string, never>> 
   }
 }
 
-const client = postgres(parseDatabaseUrl(databaseUrl))
+const client = postgres(parseDatabaseUrl(databaseUrl) as unknown as string)
 
 const db = drizzle(client, { schema: Schemas })
 
