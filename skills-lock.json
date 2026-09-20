@@ -13,6 +13,12 @@
       "skillPath": "skills/scenario-analyzer/SKILL.md",
       "computedHash": "b5fa8d05a2157183e1a4208534c7325a0221eef54a81890f5442c6500fb6037a"
     },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "128fac78002d916c8ca908245d398e634f540d8bcf20915b2b2359aeb18eba59"
+    },
     "trading-analysis": {
       "source": "gracefullight/stock-checker",
       "sourceType": "github",

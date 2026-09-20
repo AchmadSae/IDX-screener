@@ -8,7 +8,7 @@
     "dev": "concurrently \"npm:dev:api\" \"npm:dev:ui\"",
     "dev:api": "tsx watch -r tsconfig-paths/register src/server/node.ts",
     "dev:ui": "vite --host 127.0.0.1 --port 50260",
-    "build": "npm run build:ui && npm run build:server",
+    "build": "vite build --mode production",
     "build:ui": "vite build --mode production",
     "build:server": "tsc -p tsconfig.server.json --noEmit",
     "start": "tsx -r tsconfig-paths/register src/server/node.ts",

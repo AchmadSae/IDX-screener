@@ -17,10 +17,20 @@ if (databaseUrl == null || databaseUrl.trim() === '') {
   throw new Error('DATABASE_URL is required for Supabase Postgres')
 }
 
-const client = postgres(databaseUrl, {
-  max: Number(process.env['DATABASE_POOL_SIZE'] ?? 10),
-  prepare: false
-})
+function parseDatabaseUrl(url: string): postgres.Options<Record<string, never>> {
+  const parsed = new URL(url)
+  return {
+    host: parsed.hostname,
+    port: Number(parsed.port || 5432),
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database: parsed.pathname.replace(/^\//, ''),
+    max: Number(process.env['DATABASE_POOL_SIZE'] ?? 10),
+    prepare: false
+  }
+}
+
+const client = postgres(parseDatabaseUrl(databaseUrl))
 
 const db = drizzle(client, { schema: Schemas })
 

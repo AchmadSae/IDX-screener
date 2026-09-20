@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-server/
+.vite/
+data/
+drizzle/
+*.test.ts
+*.spec.ts
+.vitest/
+.env
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
