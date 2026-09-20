@@ -12,3 +12,4 @@ drizzle/
 .idea/
 .DS_Store
 Thumbs.db
+api/test.ts
