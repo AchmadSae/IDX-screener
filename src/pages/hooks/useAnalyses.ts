@@ -59,6 +59,7 @@ export function useRunAnalysis() {
       assetClass?: string
       strategy?: string
       currentPrice?: number
+      aiProvider?: 'deepseek' | 'opencode'
     }): Promise<Types.AnalysisResult> => {
       setLoading(true)
       setError(null)

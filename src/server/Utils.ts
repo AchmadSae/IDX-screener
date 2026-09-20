@@ -162,28 +162,29 @@ export default class Utils {
     row: Types.FundamentalsValues,
     filter: Types.FundamentalFilter
   ): boolean {
-    if (filter.perMin != null && (row.per == null || row.per < filter.perMin)) {
+    if (filter.perMin != null && row.per != null && row.per < filter.perMin) {
       return false
     }
-    if (filter.perMax != null && (row.per == null || row.per > filter.perMax)) {
+    if (filter.perMax != null && row.per != null && row.per > filter.perMax) {
       return false
     }
-    if (filter.roeMin != null && (row.roe == null || row.roe < filter.roeMin)) {
+    if (filter.roeMin != null && row.roe != null && row.roe < filter.roeMin) {
       return false
     }
-    if (filter.derMax != null && (row.der == null || row.der > filter.derMax)) {
+    if (filter.derMax != null && row.der != null && row.der > filter.derMax) {
       return false
     }
-    if (filter.pbvMax != null && (row.pbv == null || row.pbv > filter.pbvMax)) {
+    if (filter.pbvMax != null && row.pbv != null && row.pbv > filter.pbvMax) {
       return false
     }
     if (
       filter.minMarketCapital != null &&
-      (row.marketCapital == null || row.marketCapital < filter.minMarketCapital)
+      row.marketCapital != null &&
+      row.marketCapital < filter.minMarketCapital
     ) {
       return false
     }
-    if (filter.netMarginMin != null && (row.npm == null || row.npm < filter.netMarginMin)) {
+    if (filter.netMarginMin != null && row.npm != null && row.npm < filter.netMarginMin) {
       return false
     }
     let momentumValue: number | null = null
@@ -198,7 +199,8 @@ export default class Utils {
     }
     if (
       filter.momentumMin != null &&
-      (momentumValue == null || momentumValue < filter.momentumMin)
+      momentumValue != null &&
+      momentumValue < filter.momentumMin
     ) {
       return false
     }

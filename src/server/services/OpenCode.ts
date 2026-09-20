@@ -5,9 +5,10 @@
  * Open to remote work & consulting.
  * Fullstack developer with a focus on security and experience in trading systems.
  *
- * DeepSeek v2 provider: asset-class-aware prompt contract, strict-JSON output
- * contract, ai_analysis_runs persistence, 24h input-hash caching and a simple
- * in-memory rate limiter. AI failures never block rules-based prediction.
+ * OpenRouter AI provider: uses OpenRouter API (OpenAI-compatible) with
+ * skill-embedded prompts that constrain the model to professional stock
+ * analysis scope. Free models (Nemotron 3.5 Lightning, etc.) supported.
+ * AI failures never block rules-based prediction.
  */
 
 import { createHash } from 'node:crypto'
@@ -23,21 +24,21 @@ import type {
   RuleOutput
 } from '@app/server/services/prediction/rules.ts'
 
-export const PROMPT_VERSION = 'deepseek-v2-1'
+export const PROMPT_VERSION = 'openrouter-v1-0'
 
-const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/chat/completions'
+const DEFAULT_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions'
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 const RATE_LIMIT_WINDOW_MS = 60_000
 const RATE_LIMIT_MAX_REQUESTS = 10
 const REQUEST_TIMEOUT_MS = 60_000
-// deepseek-chat list pricing (USD per 1M tokens) — estimate only, not billed.
-const COST_PER_1M_INPUT = 0.27
-const COST_PER_1M_OUTPUT = 1.1
+// Free models have $0 cost.
+const COST_PER_1M_INPUT = 0
+const COST_PER_1M_OUTPUT = 0
 
-export type DeepSeekAnalysisStatus = 'success' | 'failed' | 'cached' | 'skipped'
+export type OpenCodeAnalysisStatus = 'success' | 'failed' | 'cached' | 'skipped'
 
-export type DeepSeekAnalysisResult = {
-  status: DeepSeekAnalysisStatus
+export type OpenCodeAnalysisResult = {
+  status: OpenCodeAnalysisStatus
   model: string
   promptVersion: string
   summary: string | null
@@ -48,7 +49,7 @@ export type DeepSeekAnalysisResult = {
   estimatedCostUsd: number | null
 }
 
-export type DeepSeekAnalyzeInput = {
+export type OpenCodeAnalyzeInput = {
   symbol: string
   assetClass: PredictionAssetClass
   strategy: PredictionStrategy
@@ -57,11 +58,10 @@ export type DeepSeekAnalyzeInput = {
   closes: number[]
   fundamentals: FundamentalInput | null
   indicators: IndicatorInput | null
-  /** Optional link to the prediction that triggered this run. */
   predictionId?: string
 }
 
-type DeepSeekChatResponse = {
+type OpenCodeChatResponse = {
   choices?: { message?: { content?: string } }[]
   usage?: { prompt_tokens?: number; completion_tokens?: number }
 }
@@ -80,8 +80,7 @@ function rateLimitAllows(): boolean {
   return true
 }
 
-/** Canonical, key-ordered payload for stable input hashes. */
-export function buildPayloadHash(input: DeepSeekAnalyzeInput): string {
+export function buildPayloadHash(input: OpenCodeAnalyzeInput): string {
   const canonical = JSON.stringify({
     symbol: input.symbol,
     assetClass: input.assetClass,
@@ -107,28 +106,71 @@ function truncate(text: string, maxLength: number): string {
   return text.length <= maxLength ? text : `${text.slice(0, maxLength)}...`
 }
 
-export function buildDeepSeekPrompt(input: DeepSeekAnalyzeInput): {
+/**
+ * Builds the system prompt with embedded trading-analysis skill rules.
+ * The skill constrains the AI to professional stock/forex analysis scope:
+ * - Institutional-grade technical analysis
+ * - Risk management and position sizing
+ * - Entry/exit criteria with stop-loss discipline
+ * - Mandatory disclaimers
+ * - Strict JSON output contract
+ */
+export function buildOpenCodePrompt(input: OpenCodeAnalyzeInput): {
   system: string
   user: string
 } {
   const isStock = input.assetClass === 'stock'
+  const isIntraday = input.strategy === 'scalping_hourly' || input.strategy === 'scalping_minutes'
+
   const system = [
     'You are a disciplined trading-analysis assistant for the IDX + Forex AI Screener.',
+    '',
+    '## Scope Rules (trading-analysis skill)',
+    'You MUST stay within professional stock and forex analysis scope.',
+    'You are NOT permitted to:',
+    '- Generate code, scripts, or programming solutions',
+    '- Discuss topics unrelated to financial markets',
+    '- Provide general knowledge or trivia',
+    '- Act as a general-purpose chatbot',
+    '',
+    'You ARE permitted to:',
+    '- Analyze technical indicators (RSI, MACD, Moving Averages, Bollinger Bands, ATR)',
+    '- Evaluate fundamental metrics (PER, PBV, ROE, ROA, DER, market cap)',
+    '- Assess market conditions and volatility',
+    '- Provide entry/exit recommendations with risk management',
+    '- Identify support/resistance levels',
+    '- Discuss sector rotation and market sentiment',
+    '',
+    '## Analysis Framework',
     isStock
       ? 'The instrument is an Indonesian equity. Use its fundamentals (PER, PBV, ROE, ROA, DER, market cap, revenue, sector, corporate-action flags) together with price technicals.'
       : 'The instrument is a forex pair or precious metal. Use price technicals and volatility only; there are no equity fundamentals.',
     `The trader's strategy is "${input.strategy}" (scalping: intraday-to-days, swing: days-to-weeks, long_term: weeks-to-months).`,
+    isIntraday
+      ? 'For intraday strategies, focus on short-term momentum, mean-reversion signals, and quick scalp opportunities. Tighter stops and targets are expected.'
+      : '',
     'You are given rule-engine output; critically compare it with your own read. Disagree where the data supports it.',
+    '',
+    '## Output Contract',
     'Respond with STRICT JSON only — no markdown fences, no prose outside the JSON object. Schema:',
     '{"label":"bullish|neutral|bearish","bullishProbability":0-100,"targetPrice":number,"stopLoss":number,"horizonDays":integer,"reasons":["..."],"riskWarnings":["..."],"confidenceScore":0-100,"disclaimer":"..."}',
     '',
     '## Directional Pricing',
-    `- If label is "bullish": targetPrice must be ABOVE entry (${input.entryPrice}), stopLoss BELOW entry (long position)`,
-    `- If label is "bearish": targetPrice must be BELOW entry (${input.entryPrice}), stopLoss ABOVE entry (short position)`,
+    '- If label is "bullish": targetPrice must be ABOVE entry, stopLoss BELOW entry (long position)',
+    '- If label is "bearish": targetPrice must be BELOW entry, stopLoss ABOVE entry (short position)',
     '- If label is "neutral": provide the most likely directional move with corresponding target/stop',
+    `- The rule engine's current entry price is ${input.entryPrice}.`,
     '',
-    'The disclaimer must state that this is analysis support, not guaranteed profit or financial advice.'
-  ].join('\n')
+    '## Risk Management Rules',
+    '- Stop loss MUST be defined for every recommendation',
+    '- Risk-reward ratio should be at least 1:2 for swing trades, 1:1.5 for scalps',
+    '- Never recommend risking more than 2% of portfolio on a single position',
+    '- Consider position sizing based on account risk tolerance',
+    '',
+    '## Disclaimer Requirement',
+    'The disclaimer must state that this is analysis support, not guaranteed profit or financial advice.',
+    'Always remind the user that past performance does not guarantee future results.'
+  ].filter((line) => line !== '').join('\n')
 
   const user = JSON.stringify({
     instrument: {
@@ -161,10 +203,11 @@ export function buildDeepSeekPrompt(input: DeepSeekAnalyzeInput): {
   return { system, user }
 }
 
-export class DeepSeek {
-  static async analyze(input: DeepSeekAnalyzeInput): Promise<DeepSeekAnalysisResult> {
-    const apiKey = process.env['DEEPSEEK_API_KEY']
-    const model = process.env['DEEPSEEK_MODEL'] ?? 'deepseek-chat'
+export class OpenCode {
+  static async analyze(input: OpenCodeAnalyzeInput): Promise<OpenCodeAnalysisResult> {
+    const apiKey = process.env['OPENROUTER_API_KEY'] ?? process.env['OPENCODE_API_KEY']
+    const model = process.env['OPENCODE_MODEL'] ?? 'nvidia/nemotron-3.5-lightning:free'
+    const endpoint = process.env['OPENCODE_API_ENDPOINT'] ?? DEFAULT_ENDPOINT
     if (apiKey == null || apiKey.trim() === '') {
       return {
         status: 'skipped',
@@ -173,16 +216,16 @@ export class DeepSeek {
         summary: null,
         parsed: parseDeepSeek(null),
         runId: null,
-        errorMessage: 'DEEPSEEK_API_KEY is not configured',
+        errorMessage: 'OPENROUTER_API_KEY is not configured',
         tokens: null,
         estimatedCostUsd: null
       }
     }
 
     const inputHash = buildPayloadHash(input)
-    const cached = await DeepSeek.findCachedRun(inputHash)
+    const cached = await OpenCode.findCachedRun(inputHash)
     if (cached != null && cached.responseSummary != null) {
-      const run = await DeepSeek.recordRun(input, {
+      const run = await OpenCode.recordRun(input, {
         status: 'cached',
         inputHash,
         responseSummary: cached.responseSummary,
@@ -202,7 +245,7 @@ export class DeepSeek {
     }
 
     if (!rateLimitAllows()) {
-      const run = await DeepSeek.recordRun(input, {
+      const run = await OpenCode.recordRun(input, {
         status: 'failed',
         inputHash,
         errorMessage: 'rate limit exceeded'
@@ -220,16 +263,18 @@ export class DeepSeek {
       }
     }
 
-    const { system, user } = buildDeepSeekPrompt(input)
+    const { system, user } = buildOpenCodePrompt(input)
     let content: string | null = null
     let tokens: { promptTokens: number; completionTokens: number } | null = null
     let errorMessage: string | null = null
     try {
-      const response = await fetch(DEEPSEEK_ENDPOINT, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://idx-screener.neabyte.com',
+          'X-Title': 'IDX Screener'
         },
         body: JSON.stringify({
           model,
@@ -242,9 +287,9 @@ export class DeepSeek {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
       })
       if (!response.ok) {
-        errorMessage = `DeepSeek API ${response.status}`
+        errorMessage = `OpenCode API ${response.status}`
       } else {
-        const json = (await response.json()) as DeepSeekChatResponse
+        const json = (await response.json()) as OpenCodeChatResponse
         content = json.choices?.[0]?.message?.content?.trim() ?? null
         tokens = {
           promptTokens: json.usage?.prompt_tokens ?? 0,
@@ -255,15 +300,13 @@ export class DeepSeek {
       errorMessage = error instanceof Error ? error.message : String(error)
     }
 
-    const status: DeepSeekAnalysisStatus = content != null ? 'success' : 'failed'
+    const status: OpenCodeAnalysisStatus = content != null ? 'success' : 'failed'
     const estimatedCostUsd =
       tokens != null
         ? (tokens.promptTokens / 1_000_000) * COST_PER_1M_INPUT +
           (tokens.completionTokens / 1_000_000) * COST_PER_1M_OUTPUT
         : null
-    // Keep enough of the response that cached hits can re-parse the JSON
-    // contract (500 chars was cutting mid-JSON and nulling aiScore on cache).
-    const run = await DeepSeek.recordRun(input, {
+    const run = await OpenCode.recordRun(input, {
       status,
       inputHash,
       responseSummary: content != null ? truncate(content, 8000) : null,
@@ -289,7 +332,8 @@ export class DeepSeek {
       .where(
         and(
           eq(Schemas.aiAnalysisRuns.inputHash, inputHash),
-          eq(Schemas.aiAnalysisRuns.status, 'success')
+          eq(Schemas.aiAnalysisRuns.status, 'success'),
+          eq(Schemas.aiAnalysisRuns.provider, 'opencode')
         )
       )
       .orderBy(desc(Schemas.aiAnalysisRuns.createdAt))
@@ -306,9 +350,9 @@ export class DeepSeek {
   }
 
   private static async recordRun(
-    input: DeepSeekAnalyzeInput,
+    input: OpenCodeAnalyzeInput,
     run: {
-      status: DeepSeekAnalysisStatus
+      status: OpenCodeAnalysisStatus
       inputHash: string
       responseSummary?: string | null
       errorMessage?: string | null
@@ -321,8 +365,8 @@ export class DeepSeek {
         symbol: input.symbol,
         assetClass: input.assetClass,
         strategy: input.strategy,
-        provider: 'deepseek',
-        model: process.env['DEEPSEEK_MODEL'] ?? 'deepseek-chat',
+        provider: 'opencode',
+        model: process.env['OPENCODE_MODEL'] ?? 'nvidia/nemotron-3.5-lightning:free',
         promptVersion: PROMPT_VERSION,
         status: run.status,
         inputHash: run.inputHash,
@@ -339,7 +383,7 @@ export class DeepSeek {
     assetClass?: string
     limit?: number
   }) {
-    const conditions = []
+    const conditions = [eq(Schemas.aiAnalysisRuns.provider, 'opencode')]
     if (filters.symbol != null && filters.symbol !== '') {
       conditions.push(eq(Schemas.aiAnalysisRuns.symbol, filters.symbol))
     }
@@ -349,7 +393,7 @@ export class DeepSeek {
     const limit = Math.min(Math.max(filters.limit ?? 20, 1), 100)
     return await Database.select()
       .from(Schemas.aiAnalysisRuns)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .where(and(...conditions))
       .orderBy(desc(Schemas.aiAnalysisRuns.createdAt))
       .limit(limit)
   }

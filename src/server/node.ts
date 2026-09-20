@@ -27,6 +27,7 @@ import * as InstrumentsRoute from '@app/server/routes/api/instruments.ts'
 import * as InstrumentOhlcRoute from '@app/server/routes/api/instruments/[symbol]/ohlc.ts'
 import * as AnalysesRoute from '@app/server/routes/api/analyses.ts'
 import * as IngestRoute from '@app/server/routes/api/ingest.ts'
+import * as DebugRoute from '@app/server/routes/api/debug.ts'
 
 type Context = ReturnType<typeof createExpressContext>
 
@@ -100,6 +101,7 @@ async function main(): Promise<void> {
     POST: AnalysesRoute.POST
   })
   mountRoute(app, '/api/ingest', { POST: IngestRoute.POST })
+  mountRoute(app, '/api/debug', { GET: DebugRoute.GET })
 
   app.use((req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') {

@@ -130,7 +130,8 @@ export async function POST(ctx: Context): Promise<void> {
     assetClass: body.assetClass as 'stock' | 'forex' | 'metal' | undefined,
     strategy: body.strategy as 'scalping' | 'swing' | 'long_term' | undefined,
     currentPrice: body.currentPrice != null && body.currentPrice !== '' ? Number(body.currentPrice) : undefined,
-    useDeepSeek: body.useDeepSeek === true
+    useDeepSeek: body.useDeepSeek === true,
+    aiProvider: body.aiProvider as 'deepseek' | 'opencode' | undefined
   })
   ctx.send.json({ data: prediction }, { status: 201 })
 }

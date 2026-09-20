@@ -16,6 +16,7 @@ export class Screener {
     'https://www.idx.co.id/support/stock-screener/api/v1/stock-screener/get'
 
   static async run(client: Types.Client): Promise<void> {
+    console.info('[screener] fetching from IDX screener API')
     const response = await client.get(Screener.screenerUrl)
     if (!response.ok) {
       throw new Error(`Screener API ${response.status}`)
@@ -23,8 +24,10 @@ export class Screener {
     const apiResponse = (await response.json()) as Types.ScreenerApiResponse
     const results = apiResponse.results ?? []
     if (results.length === 0) {
+      console.warn('[screener] IDX API returned 0 results')
       return
     }
+    console.info(`[screener] received ${results.length} stocks from IDX API, upserting`)
     await Database.transaction(async (tx) => {
       for (const screenerItem of results) {
         const code = screenerItem.stockCode ?? ''
@@ -106,5 +109,6 @@ export class Screener {
           })
       }
     })
+    console.info(`[screener] upserted ${results.length} screener rows`)
   }
 }

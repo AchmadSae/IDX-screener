@@ -1,4 +1,12 @@
-# Product Requirements Document: IDX + Forex AI Screener
+app.post('/api/ingest', async (req, res) => {
+  try {
+    await Screener.run(req.client)
+    res.status(200).json({ message: 'Data ingested successfully' })
+  } catch (error) {
+    console.error('[ingest] Error:', error)
+    res.status(500).json({ error: 'Failed to ingest data' })
+  }
+})# Product Requirements Document: IDX + Forex AI Screener
 
 Date: 2026-09-12
 

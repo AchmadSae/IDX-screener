@@ -137,9 +137,11 @@ async function intradayBarsFromTradingView(
   if (!tv.isConfigured()) {
     return []
   }
+  const tvSymbol = symbol.replace('/', '')
   try {
     const chart = await tv.fetchChart({
-      symbol,
+      symbol: tvSymbol,
+      market: 'forex',
       resolution: tf.resolution,
       count: tf.barCount
     })

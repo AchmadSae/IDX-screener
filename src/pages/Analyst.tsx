@@ -28,6 +28,7 @@ export default function Analyst() {
   const [symbol, setSymbol] = useState('BBCA')
   const [assetClass, setAssetClass] = useState<Types.PredictionAssetClass>('stock')
   const [strategy, setStrategy] = useState<Types.PredictionStrategy>('swing')
+  const [aiProvider, setAiProvider] = useState<'deepseek' | 'opencode'>('opencode')
   const [result, setResult] = useState<Types.AnalysisResult | null>(null)
   const [expandedRun, setExpandedRun] = useState<string | null>(null)
   const { run, loading, error } = useRunAnalysis()
@@ -36,13 +37,13 @@ export default function Analyst() {
   const handleRun = useCallback(async () => {
     setResult(null)
     try {
-      const analysis = await run({ symbol, assetClass, strategy })
+      const analysis = await run({ symbol, assetClass, strategy, aiProvider })
       setResult(analysis)
       refetch()
     } catch {
       // error surfaced via useRunAnalysis
     }
-  }, [run, symbol, assetClass, strategy, refetch])
+  }, [run, symbol, assetClass, strategy, aiProvider, refetch])
 
   const formatPrice = (value: number | null | undefined) =>
     Utils.Format.formatPrice(value, assetClass)
@@ -51,7 +52,7 @@ export default function Analyst() {
     <div>
       <PageHeader
         title='AI Analyst'
-        subtitle='DeepSeek-assisted analysis: compare the rule engine with model reasoning.'
+        subtitle='AI-assisted analysis: compare the rule engine with model reasoning.'
       />
       <div className='idx-prediction-lab-grid'>
         <section className='idx-card idx-prediction-form'>
@@ -74,6 +75,20 @@ export default function Analyst() {
             <span className='idx-field-label'>Strategy</span>
             <StrategySelector value={strategy} onChange={setStrategy} />
           </div>
+          <div className='idx-field idx-mb-16'>
+            <label className='idx-field-label' htmlFor='analyst-ai-provider'>
+              AI Provider
+            </label>
+            <select
+              id='analyst-ai-provider'
+              className='idx-input'
+              value={aiProvider}
+              onChange={(event) => setAiProvider(event.target.value as 'deepseek' | 'opencode')}
+            >
+              <option value='opencode'>OpenCode AI (free models)</option>
+              <option value='deepseek'>DeepSeek</option>
+            </select>
+          </div>
           {error != null && <div className='idx-error idx-mb-16'>{error}</div>}
           <button
             type='button'
@@ -92,7 +107,7 @@ export default function Analyst() {
           </div>
           {result == null && (
             <p className='idx-p-muted'>
-              {loading ? 'DeepSeek is thinking…' : 'Select an instrument and run the analysis.'}
+              {loading ? 'AI is thinking…' : 'Select an instrument and run the analysis.'}
             </p>
           )}
           {result != null && (
@@ -114,7 +129,12 @@ export default function Analyst() {
                     )}
                   </div>
                   <div className='idx-prediction-result-strategy'>
-                    {result.strategy.replace('_', ' ')} · {result.model} · {result.promptVersion}
+                    {result.strategy.replace('_', ' ')} ·{' '}
+                    {result.rulePrediction.metadata?.direction === 'short' ? (
+                      <span className='idx-pct-down'>SHORT</span>
+                    ) : (
+                      <span className='idx-pct-up'>LONG</span>
+                    )} · {result.model} · {result.promptVersion}
                   </div>
                   <div className='idx-prediction-result-model'>
                     status: {result.status}
@@ -123,7 +143,7 @@ export default function Analyst() {
                   </div>
                   {result.status === 'skipped' && (
                     <div className='idx-analyst-skipped'>
-                      DeepSeek API key is not configured on the server — showing the rules engine
+                      AI API key is not configured on the server — showing the rules engine
                       result only.
                     </div>
                   )}

@@ -15,6 +15,7 @@ import Database from '@app/server/Database.ts'
 import * as Schemas from '@app/server/schemas/index.ts'
 import { ApiError } from '@app/server/http/errors.ts'
 import { DeepSeek } from '@app/server/services/DeepSeek.ts'
+import { OpenCode } from '@app/server/services/OpenCode.ts'
 import { InstrumentService } from '@app/server/services/InstrumentService.ts'
 import { assembleRuleInput } from '@app/server/services/prediction/inputs.ts'
 import {
@@ -22,6 +23,8 @@ import {
   type PredictionAssetClass,
   type PredictionStrategy
 } from '@app/server/services/prediction/rules.ts'
+
+export type AiProvider = 'deepseek' | 'opencode'
 
 export type { PredictionAssetClass, PredictionStrategy }
 
@@ -31,6 +34,7 @@ export type CreatePredictionInput = {
   strategy?: PredictionStrategy
   currentPrice?: number
   useDeepSeek?: boolean
+  aiProvider?: AiProvider
 }
 
 export type PredictionAiStatus = 'ok' | 'failed' | 'skipped' | 'off'
@@ -144,8 +148,11 @@ export class Prediction {
 
     let aiStatus: PredictionAiStatus = 'off'
     let aiRun: PredictionAiRun | null = null
-    if (input.useDeepSeek === true) {
-      const result = await DeepSeek.analyze({
+    const shouldRunAi = input.useDeepSeek === true || input.aiProvider != null
+    const provider: AiProvider = input.aiProvider ?? 'deepseek'
+
+    if (shouldRunAi) {
+      const analyzeInput = {
         symbol,
         assetClass,
         strategy,
@@ -155,7 +162,12 @@ export class Prediction {
         fundamentals: assembled.ruleInput.fundamentals,
         indicators: assembled.ruleInput.indicators,
         predictionId: row.id
-      })
+      }
+
+      const result = provider === 'opencode'
+        ? await OpenCode.analyze(analyzeInput)
+        : await DeepSeek.analyze(analyzeInput)
+
       if (result.status === 'skipped') {
         aiStatus = 'skipped'
       } else if (result.status === 'failed') {

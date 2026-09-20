@@ -9,9 +9,19 @@ import {
   swingBorderlineRow
 } from '@app/server/fixtures/candidateRows.ts'
 
+const defaultFilters = {
+  perMin: undefined,
+  perMax: 25,
+  roeMin: 8,
+  derMax: 1.5,
+  momentumMin: 5,
+  minValue: 5_000_000_000,
+  minVolume: 500_000
+}
+
 describe('setupResult — fundamental', () => {
   it('passes a row that meets every gate and labels it A+', () => {
-    const result = setupResult(fundamentalPassRow, 'fundamental')
+    const result = setupResult(fundamentalPassRow, 'fundamental', defaultFilters)
     expect(result.pass).toBe(true)
     expect(result.reasons).toEqual([])
     expect(result.label).toBe('A+ Quality Compounder')
@@ -20,22 +30,22 @@ describe('setupResult — fundamental', () => {
   })
 
   it('treats PER 0 and DER 1.5 as inclusive boundaries', () => {
-    const result = setupResult(fundamentalBorderlineRow, 'fundamental')
+    const result = setupResult(fundamentalBorderlineRow, 'fundamental', defaultFilters)
     expect(result.pass).toBe(true)
     expect(result.reasons).toEqual([])
     expect(result.label).toBe('B Watchlist')
   })
 
   it('collects every failure reason for a bad row', () => {
-    const result = setupResult(fundamentalFailRow, 'fundamental')
+    const result = setupResult(fundamentalFailRow, 'fundamental', defaultFilters)
     expect(result.pass).toBe(false)
     expect(result.label).toBe('C Avoid')
     expect(result.reasons).toContain('PER <= 25')
     expect(result.reasons).toContain('ROE >= 8%')
     expect(result.reasons).toContain('DER <= 1.5')
     expect(result.reasons).toContain('Momentum >= 5%')
-    expect(result.reasons).toContain('Avg value >= 5B')
-    expect(result.reasons).toContain('Avg volume >= 500K')
+    expect(result.reasons).toContain('Avg value >= 5000000000')
+    expect(result.reasons).toContain('Avg volume >= 500000')
     expect(result.reasons).toContain('Has notation')
     expect(result.reasons).toContain('Has UMA')
     expect(result.reasons).toContain('Has corporate action')

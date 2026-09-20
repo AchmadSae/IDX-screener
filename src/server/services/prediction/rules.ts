@@ -254,6 +254,11 @@ export function computeRulePrediction(input: RuleInput): RuleOutput {
 
   const score = clamp(50 + deltas.reduce((sum, value) => sum + value, 0), 5, 95)
   const bullishProbability = round2(score)
+  const isBearish = score < 50
+
+  if (isBearish) {
+    riskNotes.push('Bearish bias — target is below entry (short-side)')
+  }
 
   const atrPct = input.indicators?.atrPct ?? null
   let targetMovePct = BASE_MOVE[strategy]
@@ -269,6 +274,14 @@ export function computeRulePrediction(input: RuleInput): RuleOutput {
   if (stopMovePct > targetMovePct) {
     stopMovePct = targetMovePct
   }
+
+  // Directional pricing: bearish flips target below entry and stop above entry.
+  const targetPrice = isBearish
+    ? round2(entryPrice * (1 - targetMovePct / 100))
+    : round2(entryPrice * (1 + targetMovePct / 100))
+  const stopLoss = isBearish
+    ? round2(entryPrice * (1 + stopMovePct / 100))
+    : round2(entryPrice * (1 - stopMovePct / 100))
 
   let confidenceScore = 45
   const isIntraday = strategy === 'scalping_hourly' || strategy === 'scalping_minutes'
@@ -288,8 +301,8 @@ export function computeRulePrediction(input: RuleInput): RuleOutput {
   return {
     horizonDays: horizonFor(strategy),
     entryPrice,
-    targetPrice: round2(entryPrice * (1 + targetMovePct / 100)),
-    stopLoss: round2(entryPrice * (1 - stopMovePct / 100)),
+    targetPrice,
+    stopLoss,
     bullishProbability,
     confidenceScore,
     ruleScore: bullishProbability,
@@ -299,6 +312,7 @@ export function computeRulePrediction(input: RuleInput): RuleOutput {
       symbol,
       assetClass,
       strategy,
+      direction: isBearish ? 'short' : 'long',
       ...(isIntraday ? { horizonMinutes: INTRADAY_TIMEFRAME[strategy]?.horizonMinutes ?? 60 } : {}),
       inputs: {
         rsi14: input.indicators?.rsi14 ?? null,

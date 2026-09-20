@@ -25,6 +25,7 @@ export async function GET(ctx: Context) {
 
   const params = parseCandidateQuery((name) => ctx.query(name))
   const bundle = await loadMarketData(dateInt)
+  console.info(`[candidates] date=${bundle.summaryDate} screenerRows=${bundle.screenerRows.length} codesWithLiquidity=${bundle.codeToLiquidity.size}`)
 
   const fundamentalFilter = {
     ...(params.perMin != null && { perMin: params.perMin }),
@@ -47,6 +48,7 @@ export async function GET(ctx: Context) {
   const filteredScreenerRows = screenerRowsWithShortMomentum.filter((row) =>
     Utils.screenerPassesFundamentalFilter(row, fundamentalFilter)
   )
+  console.info(`[candidates] after fundamental filter: ${filteredScreenerRows.length}/${screenerRowsWithShortMomentum.length}`)
   const rowsForScore: Types.ScreenerRow[] = filteredScreenerRows.map((row) => ({
     code: row.code,
     name: row.name,
@@ -100,6 +102,7 @@ export async function GET(ctx: Context) {
       requireBullishTrend: params.requireBullishTrend,
       requireEarlyReversal: params.requireEarlyReversal
     })
+  console.info(`[candidates] after signal filters: ${filteredCandidates.length}`)
   if (params.withSectorRank) {
     filteredCandidates = Scoring.applySectorRanks(filteredCandidates)
   }
@@ -111,11 +114,22 @@ export async function GET(ctx: Context) {
     minVolume: params.minVolume,
     setup: params.setup
   })
+  console.info(`[candidates] after exclusion filters: ${filteredCandidates.length}`)
   filteredCandidates = Scoring.applySetupMapping(
     filteredCandidates,
     params.setup,
-    params.includeRejected
+    params.includeRejected,
+    {
+      perMin: params.perMin,
+      perMax: params.perMax,
+      roeMin: params.roeMin,
+      derMax: params.derMax,
+      momentumMin: params.momentumMin,
+      minValue: params.minValue,
+      minVolume: params.minVolume
+    }
   )
+  console.info(`[candidates] after setup mapping (${params.setup}): ${filteredCandidates.length}`)
   filteredCandidates = Scoring.sortCandidates(filteredCandidates, params.setup)
   filteredCandidates = Scoring.applySectorAndSearchFilters(
     filteredCandidates,

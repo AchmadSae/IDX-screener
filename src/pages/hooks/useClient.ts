@@ -7,6 +7,7 @@
  */
 
 import type * as Types from '@app/pages/Types.ts'
+import { debugLogRequest, debugLogResponse } from '@app/pages/utils/debugLog.ts'
 
 export async function fetchApi<T>(
   path: string,
@@ -32,14 +33,24 @@ export async function fetchApi<T>(
         }
       : {})
   }
+
+  const startTime = performance.now()
+  debugLogRequest(method, path, params, options?.body)
+
   const response = await fetch(url.toString(), init)
+  const durationMs = Math.round(performance.now() - startTime)
+
   if (!response.ok) {
     const errorBody = await response.text()
-    throw new Error(
+    const error = new Error(
       response.status === 400
         ? errorBody || 'Bad request'
         : `API ${response.status}: ${errorBody || response.statusText}`
     )
+    debugLogResponse(method, path, response.status, durationMs, error)
+    throw error
   }
+
+  debugLogResponse(method, path, response.status, durationMs)
   return response.json() as Promise<T>
 }

@@ -28,7 +28,7 @@ export default function PredictionLab() {
   const [assetClass, setAssetClass] = useState<Types.PredictionAssetClass>('stock')
   const [strategy, setStrategy] = useState<Types.PredictionStrategy>('swing')
   const [currentPrice, setCurrentPrice] = useState<string>('')
-  const [useDeepSeek, setUseDeepSeek] = useState(false)
+  const [aiProvider, setAiProvider] = useState<'off' | 'deepseek' | 'opencode'>('off')
   const [result, setResult] = useState<Types.PredictionRow | null>(null)
   const [showChart, setShowChart] = useState(false)
   const { create, loading: creating, error: createError } = useCreatePrediction()
@@ -76,14 +76,14 @@ export default function PredictionLab() {
         assetClass,
         strategy,
         ...(price !== undefined && { currentPrice: price }),
-        useDeepSeek
+        ...(aiProvider !== 'off' && { aiProvider })
       })
       setResult(prediction)
       refetchRecent()
     } catch {
       // error surfaced via useCreatePrediction
     }
-  }, [symbol, assetClass, strategy, currentPrice, useDeepSeek, create, refetchRecent])
+  }, [symbol, assetClass, strategy, currentPrice, aiProvider, create, refetchRecent])
 
   const isForex = assetClass === 'forex' || assetClass === 'metal'
   const formatPrice = (value: number | null | undefined) =>
@@ -93,7 +93,7 @@ export default function PredictionLab() {
     <div>
       <PageHeader
         title='Prediction Lab'
-        subtitle='Rules-based prediction with optional DeepSeek analysis.'
+        subtitle='Rules-based prediction with optional AI analysis (OpenCode / DeepSeek).'
       />
       <div className='idx-prediction-lab-grid'>
         <section className='idx-card idx-prediction-form'>
@@ -125,19 +125,24 @@ export default function PredictionLab() {
               onChange={(event) => setCurrentPrice(event.target.value)}
             />
           </div>
-          <label className='idx-field-check idx-mb-16'>
-            <input
-              type='checkbox'
-              checked={useDeepSeek}
-              onChange={(event) => setUseDeepSeek(event.target.checked)}
-            />
-            <span>
-              <strong>Use DeepSeek analysis</strong>
-              <span className='idx-field-check-note'>
-                Optional — rules run either way. Requires a server API key.
-              </span>
+          <div className='idx-field idx-mb-16'>
+            <label className='idx-field-label' htmlFor='ai-provider'>
+              AI Provider
+            </label>
+            <select
+              id='ai-provider'
+              className='idx-input'
+              value={aiProvider}
+              onChange={(event) => setAiProvider(event.target.value as 'off' | 'deepseek' | 'opencode')}
+            >
+              <option value='off'>Off — rules only</option>
+              <option value='opencode'>OpenCode AI (free models)</option>
+              <option value='deepseek'>DeepSeek (legacy)</option>
+            </select>
+            <span className='idx-field-check-note'>
+              Optional — rules run either way. OpenCode uses free models with skill-based analysis.
             </span>
-          </label>
+          </div>
           {createError != null && <div className='idx-error idx-mb-16'>{createError}</div>}
           <button
             type='button'
@@ -171,6 +176,11 @@ export default function PredictionLab() {
                   </div>
                   <div className='idx-prediction-result-strategy'>
                     {result.strategy.replace('_', ' ')} ·{' '}
+                    {(result.metadata as Record<string, unknown>)?.direction === 'short' ? (
+                      <span className='idx-pct-down'>SHORT</span>
+                    ) : (
+                      <span className='idx-pct-up'>LONG</span>
+                    )} ·{' '}
                     {(result.metadata as Record<string, unknown>)?.horizonMinutes != null
                       ? `${(result.metadata as Record<string, unknown>).horizonMinutes} minute horizon`
                       : `${result.horizonDays} day horizon`}
@@ -239,7 +249,7 @@ export default function PredictionLab() {
               )}
               {result.aiSummary != null && (
                 <div className='idx-ai-summary idx-mt-16'>
-                  <span className='idx-field-label'>DeepSeek Analysis</span>
+                  <span className='idx-field-label'>AI Analysis</span>
                   <p>{result.aiSummary}</p>
                   {result.aiRun != null && (
                     <div className='idx-ai-summary-meta'>

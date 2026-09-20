@@ -17,26 +17,26 @@ function hasNumber(value: number | null | undefined): value is number {
   return value != null && Number.isFinite(value)
 }
 
-const fundamentalPassDefaults = {
-  perMin: 0,
-  perMax: 25,
-  roeMin: 8,
-  derMax: 1.5,
-  momentumMin: 5,
-  minValue: 5_000_000_000,
-  minVolume: 500_000
-} as const
-
-export function setupResult(row: Types.CandidateRow, setup: Types.TradingSetup) {
+export function setupResult(
+  row: Types.CandidateRow,
+  setup: Types.TradingSetup,
+  filters?: {
+    perMin?: number
+    perMax?: number
+    roeMin?: number
+    derMax?: number
+    momentumMin?: number
+    minValue?: number
+    minVolume?: number
+  }
+) {
   if (setup === 'fundamental') {
     const reasons: string[] = []
-    // Use computed advanced scores when available, otherwise fallback to base scores
     const fundRaw = row.fundamentalScore ??
       (row.qualityScore != null ? (row.qualityScore * 100) : 0)
     const valRaw = row.valuationScore ?? (row.valueScore != null ? (row.valueScore * 100) : 0)
     let momRaw = 0
     if (row.momentumScore != null) {
-      // momentumScore can be 0..1 or 0..100 depending on earlier processing
       momRaw = row.momentumScore > 1 ? row.momentumScore : row.momentumScore * 100
     } else if (row.week13PC != null) {
       momRaw = row.week13PC
@@ -47,45 +47,48 @@ export function setupResult(row: Types.CandidateRow, setup: Types.TradingSetup) 
       if (v <= 0 && vol <= 0) {
         return 0
       }
-      // crude normalization: treat thresholds (min->max) roughly
       const vScore = v >= 10_000_000_000 ? 100 : (v / 10_000_000_000) * 100
       const volScore = vol >= 1_000_000 ? 100 : (vol / 1_000_000) * 100
       return Math.round(((vScore + volScore) / 2) * 100) / 100
     })()
-    // Composite recommendation score per requested weights
     const score = Math.round((0.4 * fundRaw + 0.3 * valRaw + 0.2 * momRaw + 0.1 * liqRaw) * 100) /
       100
 
-    // Basic pass/fail criteria checks (these thresholds mirror the default filters).
-    if (!hasNumber(row.per) || row.per < fundamentalPassDefaults.perMin) {
-      reasons.push('PER >= 0')
+    const fPerMin = filters?.perMin
+    const fPerMax = filters?.perMax
+    const fRoeMin = filters?.roeMin
+    const fDerMax = filters?.derMax
+    const fMomentumMin = filters?.momentumMin
+    const fMinValue = filters?.minValue
+    const fMinVolume = filters?.minVolume
+
+    if (fPerMin != null && hasNumber(row.per) && row.per < fPerMin) {
+      reasons.push(`PER >= ${fPerMin}`)
     }
-    if (!hasNumber(row.per) || row.per > fundamentalPassDefaults.perMax) {
-      reasons.push('PER <= 25')
+    if (fPerMax != null && hasNumber(row.per) && row.per > fPerMax) {
+      reasons.push(`PER <= ${fPerMax}`)
     }
-    if (!hasNumber(row.roe) || row.roe < fundamentalPassDefaults.roeMin) {
-      reasons.push('ROE >= 8%')
+    if (fRoeMin != null && hasNumber(row.roe) && row.roe < fRoeMin) {
+      reasons.push(`ROE >= ${fRoeMin}%`)
     }
-    if (!hasNumber(row.der) || row.der > fundamentalPassDefaults.derMax) {
-      reasons.push('DER <= 1.5')
+    if (fDerMax != null && hasNumber(row.der) && row.der > fDerMax) {
+      reasons.push(`DER <= ${fDerMax}`)
     }
     const labelMomentum = row.selectedMomentumPC ?? row.week13PC ?? row.momentumScore ?? 0
-    if (!hasNumber(row.relativeStrength) && !hasNumber(labelMomentum)) {
-      reasons.push('Momentum available')
+    if (fMomentumMin != null && hasNumber(labelMomentum) && labelMomentum < fMomentumMin) {
+      reasons.push(`Momentum >= ${fMomentumMin}%`)
     }
-    if (hasNumber(labelMomentum) && labelMomentum < fundamentalPassDefaults.momentumMin) {
-      reasons.push('Momentum >= 5%')
+    if (fMinValue != null) {
+      const v = row.avgValue20 ?? row.value ?? 0
+      if (v < fMinValue) {
+        reasons.push(`Avg value >= ${fMinValue}`)
+      }
     }
-    // fallback to value/volume if avg fields missing
-    if (!hasNumber(row.avgValue20) && !hasNumber(row.value)) {
-      reasons.push('Avg value >= 5B')
-    } else if ((row.avgValue20 ?? row.value ?? 0) < fundamentalPassDefaults.minValue) {
-      reasons.push('Avg value >= 5B')
-    }
-    if (!hasNumber(row.avgVolume20) && !hasNumber(row.volume)) {
-      reasons.push('Avg volume >= 500K')
-    } else if ((row.avgVolume20 ?? row.volume ?? 0) < fundamentalPassDefaults.minVolume) {
-      reasons.push('Avg volume >= 500K')
+    if (fMinVolume != null) {
+      const vol = row.avgVolume20 ?? row.volume ?? 0
+      if (vol < fMinVolume) {
+        reasons.push(`Avg volume >= ${fMinVolume}`)
+      }
     }
     if (row.hasNotation) {
       reasons.push('Has notation')
@@ -103,7 +106,7 @@ export function setupResult(row: Types.CandidateRow, setup: Types.TradingSetup) 
       label = 'A+ Quality Compounder'
     } else if ((row.roe ?? 0) > 15 && (row.per ?? 999999) < 15 && labelMomentum > 10) {
       label = 'A Value Growth'
-    } else if ((row.roe ?? 0) >= fundamentalPassDefaults.roeMin) {
+    } else if ((row.roe ?? 0) >= (filters?.roeMin ?? 8)) {
       label = 'B Watchlist'
     } else {
       label = 'C Avoid'
@@ -414,16 +417,16 @@ export function applyExclusionFilters(
     filtered = filtered.filter((row) => !row.hasUma)
   }
   if (filters.minValue != null) {
-    filtered = filtered.filter((row) =>
-      (filters.setup === 'fundamental' ? row.avgValue20 ?? row.value ?? 0 : row.value ?? 0) >=
-        filters.minValue!
-    )
+    filtered = filtered.filter((row) => {
+      const v = row.avgValue20 ?? row.value ?? 0
+      return v >= filters.minValue!
+    })
   }
   if (filters.minVolume != null) {
-    filtered = filtered.filter((row) =>
-      (filters.setup === 'fundamental' ? row.avgVolume20 ?? row.volume ?? 0 : row.volume ?? 0) >=
-        filters.minVolume!
-    )
+    filtered = filtered.filter((row) => {
+      const vol = row.avgVolume20 ?? row.volume ?? 0
+      return vol >= filters.minVolume!
+    })
   }
   return filtered
 }
@@ -431,11 +434,20 @@ export function applyExclusionFilters(
 export function applySetupMapping(
   candidates: (Types.CandidateRow | Types.CandidateRowWithSectorRank)[],
   setup: Types.TradingSetup,
-  includeRejected: boolean
+  includeRejected: boolean,
+  filters?: {
+    perMin?: number
+    perMax?: number
+    roeMin?: number
+    derMax?: number
+    momentumMin?: number
+    minValue?: number
+    minVolume?: number
+  }
 ): (Types.CandidateRow | Types.CandidateRowWithSectorRank)[] {
   return candidates
     .map((row) => {
-      const result = setupResult(row, setup)
+      const result = setupResult(row, setup, filters)
       return {
         ...row,
         recommendationScore: result.score,
@@ -443,7 +455,7 @@ export function applySetupMapping(
         recommendationReasons: result.reasons
       }
     })
-    .filter((row) => includeRejected || setupResult(row, setup).pass)
+    .filter((row) => includeRejected || setupResult(row, setup, filters).pass)
 }
 
 export function sortCandidates(

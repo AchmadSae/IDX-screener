@@ -17,7 +17,7 @@ const commonDefaultFilters: Pick<
   Types.CandidatesParams,
   'perMin' | 'perMax' | 'roeMin' | 'derMax' | 'momentumMin' | 'minValue' | 'minVolume'
 > = {
-  perMin: 0,
+  perMin: undefined,
   perMax: 25,
   roeMin: 8,
   derMax: 1.5,
@@ -114,11 +114,14 @@ export default function Screener() {
 
   const requestParams = useMemo(() => {
     const { sector: _s, search: _q, ...rest } = appliedParams
-    return {
+    const result = {
       ...rest,
       ...(sectorFilter.trim() !== '' && { sector: sectorFilter }),
       ...(searchForRequest !== '' && { search: searchForRequest })
     }
+
+    console.info('[screener] candidates params', result)
+    return result
   }, [appliedParams, sectorFilter, searchForRequest])
   const {
     response: candidatesResponse,
@@ -126,6 +129,12 @@ export default function Screener() {
     error: candidatesError,
     refetch: refetchCandidates
   } = Hooks.useCandidates(requestParams)
+
+  useEffect(() => {
+    if (candidatesError != null && candidatesError !== '') {
+      setToast(`Failed to load candidates: ${candidatesError}`)
+    }
+  }, [candidatesError])
   const { data: sectorData, loading: sectorLoading } = Hooks.useSectorStrength(sectorWeek)
   const {
     data: detailData,
@@ -143,6 +152,7 @@ export default function Screener() {
     const trimmed = searchQuery.trim()
     setSearchForRequest(trimmed)
     const { sector: _s, search: _q, ...rest } = params
+    Hooks.clearCandidatesCache()
     setAppliedParams({
       ...rest,
       offset: 0,
@@ -153,6 +163,7 @@ export default function Screener() {
 
   const handleDefaultFilter = useCallback(() => {
     const paramsToApply = { ...defaultParams, offset: 0 }
+    Hooks.clearCandidatesCache()
     setParams(paramsToApply)
     setAppliedParams(paramsToApply)
     setSectorFilter('')
@@ -162,6 +173,7 @@ export default function Screener() {
 
   const handleSetupChange = useCallback((setup: Types.TradingSetup) => {
     const paramsToApply = { ...paramsBySetup[setup], offset: 0 }
+    Hooks.clearCandidatesCache()
     setParams(paramsToApply)
     setAppliedParams(paramsToApply)
     setSectorFilter('')
@@ -224,13 +236,13 @@ export default function Screener() {
       const res = await Hooks.fetchApi<{ ok: boolean; summaryDate: number }>('/api/ingest', {}, { method: 'POST' })
       if (res.ok) {
         setToast(`Data updated to ${Utils.Format.formatDateInt(res.summaryDate)}`)
+        await refetchCandidates()
       } else {
         setToast('Ingestion failed')
       }
     } catch {
       setToast('Ingestion failed')
     }
-    refetchCandidates()
     setIngesting(false)
   }, [refetchCandidates])
 

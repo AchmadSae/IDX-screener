@@ -13,6 +13,10 @@ import type * as Types from '@app/pages/Types.ts'
 const CACHE_TTL_MS = 30 * 60 * 1000
 const candidatesCache = new Map<string, { data: Types.CandidatesResponse; timestamp: number }>()
 
+export function clearCandidatesCache(): void {
+  candidatesCache.clear()
+}
+
 function cacheKeyFromParams(params: Types.CandidatesParams): string {
   return JSON.stringify(params)
 }

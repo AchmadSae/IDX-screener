@@ -27,6 +27,7 @@ export type CreatePredictionBody = {
   strategy?: string
   currentPrice?: number
   useDeepSeek?: boolean
+  aiProvider?: 'deepseek' | 'opencode'
 }
 
 export type PredictionApiError = { code: string; message: string; requestId: string }
