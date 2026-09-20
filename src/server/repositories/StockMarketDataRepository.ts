@@ -33,6 +33,13 @@ function computeReturnForWeek(
   if (firstClose == null || lastClose == null) {
     return null
   }
+  const firstDate = periodRows[0].date
+  const lastDate = periodRows[periodRows.length - 1].date
+  const spanDays = lastDate - firstDate
+  const requiredDays = week * 7
+  if (spanDays < requiredDays * 0.5) {
+    return null
+  }
   return Utils.returnPctFromPrices(firstClose, lastClose)
 }
 
